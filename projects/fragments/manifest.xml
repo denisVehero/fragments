@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0" xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="TaskPaneApp">
+
+  <Id>e504fb41-a92a-4526-b101-542f557b7acb</Id>
+  <Version>1.0.0.0</Version>
+  <ProviderName>add-in express</ProviderName>
+  <DefaultLocale>en-US</DefaultLocale>
+
+  <DisplayName DefaultValue="Fragmentation add-in" />
+  <Description DefaultValue="" />
+  <IconUrl DefaultValue="https://localhost:4200/assets/Logo.png" />
+  <HighResolutionIconUrl DefaultValue="https://localhost:4200/assets/Logo.png" />
+  <SupportUrl DefaultValue="[Insert the URL of a page that provides support information for the app]" />
+  <AppDomains>
+      <AppDomain>https://localhost:4200</AppDomain>
+  </AppDomains>
+  <DefaultSettings>
+    <SourceLocation DefaultValue="https://localhost:4200" />
+  </DefaultSettings>
+
+  <Hosts>
+    <Host Name="Workbook" />
+  </Hosts>
+  <Permissions>ReadWriteDocument</Permissions>
+
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="VersionOverridesV1_0">
+    <Hosts>
+
+      <Host xsi:type="Workbook">
+        <DesktopFormFactor>
+          
+          <ExtensionPoint xsi:type="PrimaryCommandSurface">
+            <CustomTab id="Addin.Tab1">
+              <Group id="Addin.Tab1.Group1">
+                <Label resid="Addin.Tab1.GroupLabel" />
+                <Icon>
+                  <bt:Image size="16" resid="Addin.TaskpaneButton.Icon"/>
+                  <bt:Image size="32" resid="Addin.TaskpaneButton.Icon"/>
+                  <bt:Image size="80" resid="Addin.TaskpaneButton.Icon"/>
+                </Icon>
+
+
+                <Control xsi:type="Button"  id="button1">
+                  <Label resid="Addin.Button1.label" />
+                  <Supertip>
+                    <Title resid="Addin.Button1.supertip" />
+                    <Description resid="Addin.Button1.description" />
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Addin.TaskpaneButton.Icon" />
+                    <bt:Image size="32" resid="Addin.TaskpaneButton.Icon" />
+                    <bt:Image size="80" resid="Addin.TaskpaneButton.Icon" />
+                  </Icon>
+                  <Action xsi:type="ShowTaskpane">
+                    <SourceLocation resid="Taskpane.Url" />
+                  </Action>
+                </Control>
+                <Control xsi:type="Button"  id="button2">
+                  <Label resid="Addin.Button2.label" />
+                  <Supertip>
+                    <Title resid="Addin.Button2.supertip" />
+                    <Description resid="Addin.Button2.description" />
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Addin.TaskpaneButton2.Icon" />
+                    <bt:Image size="32" resid="Addin.TaskpaneButton2.Icon" />
+                    <bt:Image size="80" resid="Addin.TaskpaneButton2.Icon" />
+                  </Icon>
+                  <Action xsi:type="ShowTaskpane">
+                    <SourceLocation resid="Taskpane2.Url" />
+                  </Action>
+                </Control>
+              </Group>
+
+              
+              
+              <Label resid="Addin.Tab1.TabLabel" />
+              <InsertBefore>TabHome</InsertBefore>
+            </CustomTab>
+          </ExtensionPoint>
+        </DesktopFormFactor>
+      </Host>
+
+    </Hosts>
+    <Resources>
+      <bt:Images>
+        <bt:Image id="Addin.TaskpaneButton.Icon" DefaultValue="https://localhost:4200/assets/split.png" />
+        <bt:Image id="Addin.TaskpaneButton2.Icon" DefaultValue="https://localhost:4200/assets/split.png" />
+      </bt:Images>
+      <bt:Urls>
+
+        <bt:Url id="Taskpane.Url" DefaultValue="https://localhost:4200/decomposer"/>
+        <bt:Url id="Taskpane2.Url" DefaultValue="https://localhost:4200/merger"/>
+      </bt:Urls>
+      <bt:ShortStrings>
+        <bt:String id="Addin.Tab1.GroupLabel" DefaultValue="Worksheets" />
+        <bt:String id="Addin.Tab1.TabLabel" DefaultValue="Fragmentation" />
+        <bt:String id="Addin.Button1.supertip" DefaultValue="Decompos" />
+        <bt:String id="Addin.Button1.label" DefaultValue="Decompos" />
+        <bt:String id="Addin.Button2.supertip" DefaultValue="Merge" />
+        <bt:String id="Addin.Button2.label" DefaultValue="Merge" />
+      </bt:ShortStrings>
+      <bt:LongStrings>
+        <bt:String id="Addin.Button1.description" DefaultValue="Create worksheets for selected visible columns" />
+        <bt:String id="Addin.Button2.description" DefaultValue="Create worksheets for selected visible columns" />
+      </bt:LongStrings>
+    </Resources>
+  </VersionOverrides>
+</OfficeApp>
