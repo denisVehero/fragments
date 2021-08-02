@@ -11,7 +11,7 @@ export class OfficeEngine {
      */
     static copyValues(sourceInd: Bound[], toInd: Bound[]): Promise<any> {
         if (sourceInd.length != toInd.length) {
-            throw new Error("columns count do not match");
+            throw new Error("columns do not match");
         }
         let task: TruckBounds[] = [];
         for(let i = 0; i < sourceInd.length; i++) {
@@ -53,16 +53,14 @@ export class OfficeEngine {
     }
 
     static fillWithSomething(rangeAdr: Bound) {
+        console.log(rangeAdr)
         return Excel.run((ctx) => {
             let w = ctx.workbook.worksheets.getItem(rangeAdr.sheetName);
             let r = this.getRange(w, rangeAdr);
-            let p = new Array(rangeAdr.rowCount).fill(0).map((el) => {
-                let qq =new Array(rangeAdr.colCount).fill(0).map((el1: any) => Math.floor(Math.random()*100)) 
-                return qq
-            })
-            r.values = p;
+            let color =  "#" + ("00000" + Math.floor(Math.random() * 16581375).toString(16)).slice(-6);
+                r.format.fill.color = color;
             return ctx.sync();
-        })
+        }).then(() => console.log("adas33"));
     }
 }
 export class  Bound {

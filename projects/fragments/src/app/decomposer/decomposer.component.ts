@@ -13,12 +13,17 @@ export class DecomposerComponent implements OnInit {
 
     }
 
-    fillWithRandom() {
-        OfficeEngine.fillWithSomething(new Bound(0,0,100,100))
+    async fillWithRandom() {
+        let bounds: Bound[] = new Array(10);
+        for (let  i = 0; i < 10; i++){
+            for (let j = 0; j < 10; j++){
+                await OfficeEngine.fillWithSomething(new Bound(i*10, j*10, 10, 10))       
+            }
+        }
     }
     copy() {
         let b1 = [];
-        let b2 =[];
+        let b2 = [];
         for (let i = 0; i < 1000; i++){
             b1.push(new Bound(i, 0, 1, 1000, "Sheet1"))
         }
