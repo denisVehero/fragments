@@ -6,7 +6,6 @@ import {Component, Host} from '@angular/core';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-  afa: string = 'hjhkjhkj';
   /*showSheetsWithColumns(sheet: Excel.Worksheet, columns: Array<any>, rows: Array<any>) {
 
   }*/
