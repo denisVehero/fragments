@@ -1,5 +1,5 @@
 import { range } from "rxjs";
-
+import { ProgressStatus } from "./progress-statuses";
 export class OfficeEngine {
     static maxCells = 5000;
     /**
@@ -9,7 +9,7 @@ export class OfficeEngine {
      * @param toInd indices of target columns
      * @param toSheet indices of target sheet
      */
-    static copyValues(sourceInd: Bound[], toInd: Bound[]): Promise<any> {
+    static copyValues(sourceInd: Bound[], toInd: Bound[], progress?: ProgressStatus): Promise<any> {
         if (sourceInd.length != toInd.length) {
             throw new Error("columns do not match");
         }
@@ -20,8 +20,8 @@ export class OfficeEngine {
                 throw new Error("bound sizes do not match");
             }
             if (sourceInd[i].colCount * sourceInd[i].rowCount > this.maxCells) {
-                let tmp1 = Bound.splitBound(sourceInd[i], this.maxCells, this.maxCells);
-                let tmp2 = Bound.splitBound(toInd[i], this.maxCells, this.maxCells);
+                let tmp1 = Bound.splitBound(sourceInd[i], this.maxCells, 1);
+                let tmp2 = Bound.splitBound(toInd[i], this.maxCells, 1);
                 for (let j = 0; j < tmp1.length; j++) {
                     task.push(new TruckBounds(tmp1[i], tmp2[i]));
                 }
@@ -29,19 +29,32 @@ export class OfficeEngine {
                 task.push(new TruckBounds(sourceInd[i], toInd[i]))
             }
         }
-        return Excel.run((ctx) => {
+		if (progress) {
+			progress.planed = task.length;
+			progress.complited = 0;
+		}
+        return Excel.run(async (ctx) => {
             let sourceRange = ctx.workbook.worksheets.getItem(task[0].source.sheetName);
             let destRange = ctx.workbook.worksheets.getItem(task[0].destination.sheetName);
             let r1: Excel.Range, r2: Excel.Range;
-            for (let i = 0; i < sourceInd.length; i++){
-                r1 = this.getRange(sourceRange, sourceInd[i]);;
-                r2 = this.getRange(destRange, toInd[i]);
+            let counter = 0;
+            for (let i = 0; i < task.length; i++){
+                r1 = this.getRange(sourceRange, task[i].source);;
+                r2 = this.getRange(destRange, task[i].destination);
+                counter += task[i].source.colCount * task[i].source.rowCount;
                 r2.copyFrom(r1);
+                if (progress) progress.complited++;
+                if (counter >5000 ) {
+                    await ctx.sync();
+                    counter = 0;
+                }
             }
-            console.log("before sync")
-            return ctx.sync();
+            await ctx.sync();
         })
     }
+
+
+
     /**
      * 
      * @param worksheet worksheet, containing range
