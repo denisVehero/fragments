@@ -6,45 +6,64 @@ import {Component, OnInit} from '@angular/core';
   styleUrls: ['./merger.component.scss']
 })
 export class MergerComponent implements OnInit {
+  sheetArr: Array<string> = []
 
-  rangeArr: Array<Excel.Worksheet> = [];
-
-  visibleColumnsArr = new Map<Number, Number>();
+  visibleColumnsArr: Array<any> = [];
 
   constructor() {
   }
 
   ngOnInit(): void {
+    this.getSheets().then((arr) => {
+      this.sheetArr = arr;
+    })
+    this.getVisibleColumns().then((arr) => {
+      this.visibleColumnsArr = arr;
+    })
   }
 
-  getVisibleRanges() {
-
-    Excel.run(context => {
-      const sheets = context.workbook.worksheets;
-      sheets.load(["items"]);
+  getVisibleColumns(): Promise <any[]> {
+    return Excel.run(context => {
+      const sheet = context.workbook.worksheets.getItem('Sheet1');
+      sheet.load(["items"]);
       const hiddenColumns: Array<OfficeExtension.ClientResult<Excel.ColumnProperties[]>> = [];
       let range: Excel.Range;
+      range = sheet.getUsedRange();
+      range.load(["address", "values"]);
+      console.log('range', range)
+      hiddenColumns.push(range.getColumnProperties({columnHidden: true, columnIndex: true}))
+      return context.sync().then(() => {
+        let visibleArr: Array<any> = [];
+        hiddenColumns.forEach(el => {
+          const visibleColumns: Excel.ColumnProperties[] = el.value.filter(column => column.columnHidden === false);
+          console.log(visibleColumns, '')
+          visibleColumns.forEach(column => {
+            if (column.columnIndex) {
+              visibleArr.push({index: column.columnIndex, value: this.fromNumToChar(column.columnIndex + 1)});
+            }
+          })
+        })
+        return visibleArr;
+      })
+    })
+  }
+
+  getSheets(): Promise<Array<string>> {
+    return Excel.run(context => {
+      const sheets = context.workbook.worksheets;
+      sheets.load(["items"]);
+      let sheetArr: Array<string> = [];
       return context.sync().then(() => {
         sheets.items.forEach(sheet => {
-          sheet.load(["name"])
-          range = sheet.getUsedRange();
-          range.load(["address", "values"])
-          console.log('range', range)
-          this.rangeArr.push(sheet);
-          hiddenColumns.push(range.getColumnProperties({columnHidden: true, columnIndex: true}))
+          sheet.load(["name", "visibility"])
         })
         return context.sync().then(() => {
-          hiddenColumns.forEach(el => {
-            const visibleColumns: Excel.ColumnProperties[] = Object.values(el.value).filter(column => column.columnHidden === false);
-            visibleColumns.forEach(column => {
-              // @ts-ignore
-              this.visibleColumnsArr.set(column.columnIndex, this.fromNumToChar(column.columnIndex + 1));
-              /*// @ts-ignore
-              console.log(column.columnIndex, this.fromNumToChar(column.columnIndex + 1))*/
-            })
+          sheets.items.forEach(sheet => {
+            if (sheet.visibility === Excel.SheetVisibility.visible) {
+              sheetArr.push(sheet.name);
+            }
           })
-          //console.log('values', range.values)
-          console.log('visibleColumnsArr', this.visibleColumnsArr)
+          return sheetArr;
         })
       })
     })
@@ -58,7 +77,7 @@ export class MergerComponent implements OnInit {
     //console.log('sheetCheckboxes', sheetCheckboxes)
     columnCheckboxes.forEach(column => {
       // @ts-ignore
-      if (column.checked === true) {
+      if (column.checked === false) {
         checkedColumnsArr.push(column.id);
       }
     })
@@ -88,7 +107,7 @@ export class MergerComponent implements OnInit {
           console.log('hiddenRows', hiddenRows)
           const getValues = range.values;
           hiddenRows.forEach(el => {
-            const visibleRows: Excel.RowProperties[] = Object.values(el.value).filter(row => row.rowHidden === false)
+            const visibleRows: Excel.RowProperties[] = Object.values(el.value).filter(row => row.rowHidden === true)
             visibleRows.forEach(row => {
               visibleRowsArr.push(row.rowIndex);
             })
