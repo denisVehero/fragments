@@ -36,7 +36,7 @@ export class DecomposerComponent implements OnInit {
             b2.push(new Bound(i, 0, 1, 1000, "Sheet2"))
         }
         console.log("copy");
-		let p = new ProgressStatus(0,0, "sometr");
+		let p = new ProgressStatus(0,0, "copying");
 		this.progressStatuses.append(p);
         OfficeEngine.copyValues(b1, b2, p).then(() => {
             console.log("finished")

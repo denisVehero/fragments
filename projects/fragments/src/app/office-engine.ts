@@ -34,17 +34,18 @@ export class OfficeEngine {
 			progress.complited = 0;
 		}
         return Excel.run(async (ctx) => {
-            let sourceRange = ctx.workbook.worksheets.getItem(task[0].source.sheetName);
-            let destRange = ctx.workbook.worksheets.getItem(task[0].destination.sheetName);
+            
             let r1: Excel.Range, r2: Excel.Range;
             let counter = 0;
             for (let i = 0; i < task.length; i++){
+				let sourceRange = ctx.workbook.worksheets.getItem(task[i].source.sheetName);
+            	let destRange = ctx.workbook.worksheets.getItem(task[i].destination.sheetName);
                 r1 = this.getRange(sourceRange, task[i].source);;
                 r2 = this.getRange(destRange, task[i].destination);
                 counter += task[i].source.colCount * task[i].source.rowCount;
                 r2.copyFrom(r1);
                 if (progress) progress.complited++;
-                if (counter >5000 ) {
+                if (counter > this.maxCells) {
                     await ctx.sync();
                     counter = 0;
                 }
@@ -71,7 +72,7 @@ export class OfficeEngine {
             let w = ctx.workbook.worksheets.getItem(rangeAdr.sheetName);
             let r = this.getRange(w, rangeAdr);
             let color =  "#" + ("00000" + Math.floor(Math.random() * 16581375).toString(16)).slice(-6);
-                r.format.fill.color = color;
+            r.format.fill.color = color;
             return ctx.sync();
         }).then(() => console.log("adas33"));
     }
