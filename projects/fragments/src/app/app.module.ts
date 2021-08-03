@@ -5,7 +5,9 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { DecomposerComponent } from './decomposer/decomposer.component';
 import { MergerComponent } from './merger/merger.component';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
+import {MatButtonModule} from '@angular/material/button';
 @NgModule({
   declarations: [
     AppComponent,
@@ -14,7 +16,9 @@ import { MergerComponent } from './merger/merger.component';
   ],
   imports: [
     BrowserModule,
-    AppRoutingModule
+    AppRoutingModule,
+    BrowserAnimationsModule,
+    MatButtonModule
   ],
   providers: [],
   bootstrap: [AppComponent]
