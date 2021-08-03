@@ -7,9 +7,9 @@ import {Component, OnInit} from '@angular/core';
 })
 export class MergerComponent implements OnInit {
 
-  rangeArr: Array<Excel.Range> = [];
+  rangeArr: Array<Excel.Worksheet> = [];
 
-  visibleColumnsArr = new Map<Number, Number>()
+  visibleColumnsArr = new Map<Number, Number>();
 
   constructor() {
   }
@@ -22,40 +22,28 @@ export class MergerComponent implements OnInit {
     Excel.run(context => {
       const sheets = context.workbook.worksheets;
       sheets.load(["items"]);
-      let hiddenColumns: Array<OfficeExtension.ClientResult<Excel.ColumnProperties[]>> = [];
-      let hiddenRows: Array<OfficeExtension.ClientResult<Excel.RowProperties[]>> = [];
+      const hiddenColumns: Array<OfficeExtension.ClientResult<Excel.ColumnProperties[]>> = [];
       let range: Excel.Range;
       return context.sync().then(() => {
         sheets.items.forEach(sheet => {
-          sheet.load(["names", "name", "tables"])
+          sheet.load(["name"])
           range = sheet.getUsedRange();
           range.load(["address", "values"])
           console.log('range', range)
-          this.rangeArr.push(range);
+          this.rangeArr.push(sheet);
           hiddenColumns.push(range.getColumnProperties({columnHidden: true, columnIndex: true}))
-          hiddenRows.push(range.getRowProperties({rowHidden: true, rowIndex: true}))
         })
         return context.sync().then(() => {
-          /*console.log('hiddenCol', hiddenColumns)
-          console.log('hiddenRow', hiddenRows)*/
-          hiddenRows.forEach(el => {
-            let visibleRowsArr: Array<any> = [];
-            let visibleRows = Object.values(el.value).filter(row => row.rowHidden === false)
-            visibleRows.forEach(row => {
-              visibleRowsArr.push(row.rowIndex);
-            })
-            console.log('rowsNotHidden', visibleRowsArr)
-          })
           hiddenColumns.forEach(el => {
-            let visibleColumns: Excel.ColumnProperties[] = Object.values(el.value).filter(column => column.columnHidden === false);
+            const visibleColumns: Excel.ColumnProperties[] = Object.values(el.value).filter(column => column.columnHidden === false);
             visibleColumns.forEach(column => {
               // @ts-ignore
               this.visibleColumnsArr.set(column.columnIndex, this.fromNumToChar(column.columnIndex + 1));
               /*// @ts-ignore
               console.log(column.columnIndex, this.fromNumToChar(column.columnIndex + 1))*/
             })
-            //console.log('columnsNotHidden', hiddenColumns)
           })
+          //console.log('values', range.values)
           console.log('visibleColumnsArr', this.visibleColumnsArr)
         })
       })
@@ -63,14 +51,62 @@ export class MergerComponent implements OnInit {
   }
 
   getCheckProperties() {
-    let checkedSheetsArr: Array<any>;
-    let checkedColumnsArr: Array<any>;
+    let checkedSheetsArr: Array<any> = [];
+    let checkedColumnsArr: Array<any> = [];
     let sheetCheckboxes = document.querySelectorAll("input[name=sheet]");
     let columnCheckboxes = document.querySelectorAll("input[name=column]");
-    sheetCheckboxes.forEach(el=> {
-      /*if (el.checked === true) {
+    //console.log('sheetCheckboxes', sheetCheckboxes)
+    columnCheckboxes.forEach(column => {
+      // @ts-ignore
+      if (column.checked === true) {
+        checkedColumnsArr.push(column.id);
+      }
+    })
+    sheetCheckboxes.forEach(sheet => {
+      // @ts-ignore
+      if (sheet.checked === true) {
+        checkedSheetsArr.push(sheet.id);
+      }
+    })
+    checkedSheetsArr.forEach(sheet => {
+      this.getChooseProperties(sheet, checkedColumnsArr)
+    })
+  }
 
-      }*/
+  getChooseProperties(sheet: Excel.Worksheet, columns: Excel.ColumnProperties[]) {
+    Excel.run(context => {
+      const worksheet = context.workbook.worksheets.getItem(`${sheet}`);
+      const hiddenRows: Array<OfficeExtension.ClientResult<Excel.RowProperties[]>> = [];
+      let range: Excel.Range;
+
+      return context.sync().then(() => {
+        range = worksheet.getUsedRange();
+        range.load(["address", "values"])
+        hiddenRows.push(range.getRowProperties({rowHidden: true, rowIndex: true, address: true, addressLocal: true}))
+        const visibleRowsArr: Array<any> = [];
+        return context.sync().then(() => {
+          console.log('hiddenRows', hiddenRows)
+          const getValues = range.values;
+          hiddenRows.forEach(el => {
+            const visibleRows: Excel.RowProperties[] = Object.values(el.value).filter(row => row.rowHidden === false)
+            visibleRows.forEach(row => {
+              visibleRowsArr.push(row.rowIndex);
+            })
+            console.log('rowsNotHidden', visibleRowsArr)
+          })
+          console.log('getValues', getValues)
+          //console.log(columns)
+          /*for (let el of visibleRowsArr) {
+            Object.values(getValues).forEach(row => {
+              if (row === el) {
+
+              }
+            })
+          }*/
+
+        })
+
+      })
     })
   }
 

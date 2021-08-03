@@ -2,17 +2,18 @@
   <h1>
     Welcome to Merge!
   </h1>
-  <ul *ngFor="let value of rangeArr" (click)="getCheckProperties()">
-    <li value="{{value.address}}">{{value.address}}
-      <input type="checkbox" id="{{value.address}}" name="sheet" [checked]="">
+  <ul *ngFor="let value of rangeArr">
+    <li value="{{value.name}}">{{value.name}}
+      <input type="checkbox" id="{{value.name}}" name="sheet" [checked]="">
     </li>
   </ul>
-  <ul (click)="getCheckProperties()">
+  <ul>
     <li *ngFor="let column of visibleColumnsArr | keyvalue" value="{{column.value}}">{{column.value}}
       <input type="checkbox" id="{{column.key}}" name="column">
     </li>
   </ul>
 
-  <button type="button" (click)="getVisibleRanges()">Select</button>
+  <button type="button" (click)="getVisibleRanges()">Show sheets and visible columns</button>
+  <button type="button" (click)="getCheckProperties()">Show choose properties</button>
 </div>
 
