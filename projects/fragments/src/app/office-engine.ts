@@ -276,4 +276,5 @@ export class TruckBounds {
     this.source = source;
     this.destination = destination
   }
+
 }

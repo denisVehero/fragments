@@ -18,7 +18,7 @@ import {MatInputModule} from '@angular/material/input';
 import {MatCheckboxModule} from '@angular/material/checkbox';
 import { FormsModule } from '@angular/forms';
 
-
+import {MatButtonModule} from '@angular/material/button';
 @NgModule({
   declarations: [
     AppComponent,
@@ -31,14 +31,16 @@ import { FormsModule } from '@angular/forms';
     BrowserModule,
     AppRoutingModule,
     BrowserAnimationsModule,
+    merge-branch
     MatButtonModule,
-	ScrollingModule,
-	MatListModule,
-	MatProgressBarModule,
-	MatCardModule,
-	MatInputModule,
-	MatCheckboxModule,
-	FormsModule
+	  ScrollingModule,
+	  MatListModule,
+	  MatProgressBarModule,
+	  MatCardModule,
+	  MatInputModule,
+	  MatCheckboxModule,
+	  FormsModule,
+    MatButtonModule
   ],
   providers: [],
   bootstrap: [AppComponent]
