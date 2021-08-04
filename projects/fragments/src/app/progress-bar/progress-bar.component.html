@@ -1,0 +1,10 @@
+
+<mat-card style="width: 100%; margin-top: 10px;" *ngIf="progress">
+	<mat-card-header>
+		<mat-card-title>{{progress.title}}</mat-card-title>
+	</mat-card-header>
+	<mat-card-content>
+		<mat-progress-bar mode="determinate" [value]="progress.complited * 100 / progress.planed"></mat-progress-bar> 
+		<button mat-raised-button color = "primary" (click)="cancelClick()">cancel</button>
+	</mat-card-content>
+</mat-card>
