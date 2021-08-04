@@ -10,10 +10,81 @@ import { ProgressStatus } from "../progress-statuses";
 export class DecomposerComponent implements OnInit {
 
     constructor() { }
-	progressStatuses: LinkedList<ProgressStatus> = new LinkedList<ProgressStatus>()
+	progressStatuses: LinkedList<ProgressStatus> = new LinkedList<ProgressStatus>();
+	columns: {index: number, name: string, checked: boolean}[] = [];
+	mode: number = 0;
+	n: number = 10;
+	sheetName: string ='';
     ngOnInit(): void {
 		
+		OfficeEngine.getCurrentSheet().then((res) => {
+			this.sheetName = res;
+			OfficeEngine.getVisibleColumns(this.sheetName).then((ans) => {
+				this.columns = ans.map((val) => {val.checked = false; return val;})
+				this.columns[0].checked = true;
+				this.columns[1].checked = true;
+				this.columns[2].checked = true;
+				this.columns[3].checked = true;
+			})
+		})
     }
+
+	async split() {
+		let checkedCols = this.columns.filter((v) => v.checked)
+		let hiddenRows = await OfficeEngine.getInvisibleRows(this.sheetName);
+		let sourceRanges: Bound[] = [];
+		let destinationRanges: Bound[] = [];
+		hiddenRows.push(100);
+		hiddenRows.unshift(-1);
+		console.log(checkedCols);
+		
+
+		let prev = checkedCols[0];
+		let deltaX = 0;
+		for(let i = 0; i <= checkedCols.length - 1; i++) {
+			//left col: checkedCols[i].index, colcount: checkedCols[i + 1].index - checkedCols[i].index
+			if (i ==checkedCols.length - 1 || checkedCols[i + 1].index - checkedCols[i].index > 1){
+				let counter = 1;
+				let sheetCounter = 0;
+				let remaining = this.n;
+				let j = hiddenRows[0] + 1;
+				while (j < hiddenRows[hiddenRows.length - 1]){
+					let dj = Math.min(remaining, hiddenRows[counter] - j)
+					let tmp = new Bound(
+						prev.index,
+						j,
+						checkedCols[i].index - prev.index + 1,
+						dj,
+						this.sheetName
+					);
+					sourceRanges.push(tmp);
+					let tmp2 = new Bound(
+						prev.index - deltaX,
+						this.n - remaining,
+						checkedCols[i].index - prev.index + 1,
+						dj,
+						"s" + sheetCounter
+					)
+					destinationRanges.push(tmp2)
+					j += dj;
+					remaining = remaining - dj;
+					if (remaining == 0) {
+						remaining = this.n
+						sheetCounter++;
+					}
+					if (j >= hiddenRows[counter]) {
+						j = hiddenRows[counter] +1;
+						counter++;
+					}
+				}	
+				prev = checkedCols[i + 1];
+				if (i < checkedCols.length - 1) deltaX += checkedCols[i + 1].index - checkedCols[i].index -1;
+			}
+		}
+		
+	}
+
+
 	cancel(p: ProgressStatus) {
 		if (this.progressStatuses.length==1) this.progressStatuses.removeHead()
 			else this.progressStatuses.remove(p);
@@ -44,14 +115,22 @@ export class DecomposerComponent implements OnInit {
 		});
     }
     test() {
-		// OfficeEngine.createWorksheet("as");
+		OfficeEngine.createWorksheet("as").then((n) => {
+			console.log(n);
+		})
 		
 		// OfficeEngine.getRangeValues([new Bound(0,0,1,10), new Bound(1,0,1,10)]).then((res) => {
 		// 	console.log(res);
 		// })
+
+		// OfficeEngine.getInvisibleRows("Sheet1").then((rr) => {
+		// 	console.log("res",rr);
+		// })
+		// OfficeEngine.getVisibleSheets().then((rr) => {
+		// 	console.log(rr);
+		// })
+		console.log(this.sheetName)
     }
 
-	split() {
-		
-	}
+	
 }
