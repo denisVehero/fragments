@@ -14,6 +14,9 @@ import { ProgressBarComponent } from './progress-bar/progress-bar.component';
 import {MatListModule} from '@angular/material/list';
 import {MatProgressBarModule} from '@angular/material/progress-bar';
 import {MatCardModule} from '@angular/material/card';
+import {MatInputModule} from '@angular/material/input';
+import {MatCheckboxModule} from '@angular/material/checkbox';
+import { FormsModule } from '@angular/forms';
 
 
 @NgModule({
@@ -32,7 +35,10 @@ import {MatCardModule} from '@angular/material/card';
 	ScrollingModule,
 	MatListModule,
 	MatProgressBarModule,
-	MatCardModule
+	MatCardModule,
+	MatInputModule,
+	MatCheckboxModule,
+	FormsModule
   ],
   providers: [],
   bootstrap: [AppComponent]

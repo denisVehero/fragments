@@ -35,13 +35,23 @@ export class DecomposerComponent implements OnInit {
         for (let i = 0; i < 1000; i++){
             b2.push(new Bound(i, 0, 1, 1000, "Sheet2"))
         }
+		
         console.log("copy");
-		let p = new ProgressStatus(0,0, "copying");
+		let p = new ProgressStatus(b1.length, 0, "copying");
 		this.progressStatuses.append(p);
-        OfficeEngine.copyValues(b1, b2, p).then(() => {
-            console.log("finished")
-        });
+		OfficeEngine.copyValues(b1, b2, p).then(() => {
+			console.log("finished in ")
+		});
     }
     test() {
+		// OfficeEngine.createWorksheet("as");
+		
+		// OfficeEngine.getRangeValues([new Bound(0,0,1,10), new Bound(1,0,1,10)]).then((res) => {
+		// 	console.log(res);
+		// })
     }
+
+	split() {
+		
+	}
 }
