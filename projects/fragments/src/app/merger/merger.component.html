@@ -8,8 +8,8 @@
     </li>
   </ul>
   <ul>
-    <li *ngFor="let column of visibleColumnsArr | keyvalue" value="{{column.value}}">{{column.value}}
-      <input type="checkbox" id="{{column.key}}" name="column">
+    <li *ngFor="let column of visibleColumnsArr" value="{{column.value}}">{{column.value}}
+      <input type="checkbox" id="{{column.index}}" name="column">
     </li>
   </ul>
 
