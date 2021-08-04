@@ -1,5 +1,5 @@
 import {Component, OnInit} from '@angular/core';
-import {OfficeEngine} from '../office-engine'
+import {Bound, OfficeEngine} from '../office-engine'
 
 @Component({
   selector: 'app-merger',
@@ -22,9 +22,8 @@ export class MergerComponent implements OnInit {
     OfficeEngine.getVisibleColumns('Sheet1').then((arr) => {
       this.visibleColumnsArr = arr;
     })
-
     OfficeEngine.getInvisibleRows('Sheet1').then((arr) => {
-      console.log('arr', arr)
+      console.log('inv', arr)
       this.invisibleRowsArr = arr;
     })
   }
@@ -47,50 +46,62 @@ export class MergerComponent implements OnInit {
       }
     })
     checkedSheetsArr.forEach(sheet => {
-      OfficeEngine.getInvisibleRows(sheet).then((arr) => {
+      //console.log('sheet', sheet)
+      /*OfficeEngine.getInvisibleRows(sheet).then((arr) => {
         this.invisibleRowsArr = arr;
-      })
-      //this.splitBySquares()
-      //this.getChooseProperties(sheet, uncheckedColumnsArr)
+      })*/
+      this.splitBySquares(this.invisibleRowsArr, checkedColumnsArr)
+      console.log('rows+ columns', this.invisibleRowsArr, checkedColumnsArr)
     })
   }
 
- /* getChooseProperties(sheet: Excel.Worksheet, columns: Excel.ColumnProperties[]) {
-    Excel.run(context => {
-      const worksheet = context.workbook.worksheets.getItem(`${sheet}`);
-      const arrRows: Array<OfficeExtension.ClientResult<Excel.RowProperties[]>> = [];
-      let range: Excel.Range;
-      return context.sync().then(() => {
-        range = worksheet.getUsedRange();
-        range.load(["address"])
-        arrRows.push(range.getRowProperties({rowHidden: true, rowIndex: true}))
-        const invisibleRowIndexArr: any[] = [];
-        return context.sync().then(() => {
-          console.log('arrRows', arrRows)
-          arrRows.forEach(el => {
-            const invisibleRowsArr: Excel.RowProperties[] = el.value.filter(row => row.rowHidden === true)
-            invisibleRowsArr.forEach(row => {
-              invisibleRowIndexArr.push(row.rowIndex);
-            })
-            console.log('rowsHidden', invisibleRowIndexArr)
-          })
-          //this.splitBySquares(invisibleRowIndexArr, invisibleColumnIndexArr);
-
-        })
-
-      })
-    })
-  }*/
-
-  splitBySquares(rows: number[], columns: number[]) {
+  splitBySquares(rows: number[], cols: number[]): Bound[][] {
     let i: number;
     let j: number;
-    let arrRows = [];
-    let row = [];
-      for (i = 0, i < rows.length; i++;) {
-        row.push()
-    }
-  }
+    let arrRows: Bound[][] = [];
+    let row: Bound[] = [];
+    let colCount = 1;
 
+    for (i = 0, i < rows.length; ;) {
+      if (rows[i] === rows[rows.length - 1]) {
+        break;
+      }
+      for (j = 0, j < cols.length; ;) {
+        console.log('row', row)
+        if (rows[i] === 0) {
+          if (cols[j] + colCount === cols[j + 1]) {
+            colCount += 1;
+            row.push(new Bound(cols[j], rows[i] + 1, colCount, rows[i + 1]));
+
+            j += 2;
+          } else {
+            colCount = 1;
+            row.push(new Bound(cols[j], rows[i] + 1, colCount, rows[i + 1] + 1));
+            j += 1;
+          }
+        } else {
+          if (cols[j] + colCount === cols[j + 1]) {
+            colCount += 1;
+            row.push(new Bound(cols[j], 0, colCount, rows[i + 1] - rows[i]));
+            console.log('jhlkjl', new Bound(cols[j], 0, colCount, rows[i + 1] - rows[i]))
+            j += 2;
+          } else {
+            colCount = 1;
+            row.push(new Bound(cols[j], 0, colCount, rows[i + 1] - rows[i]));
+            j += 1;
+          }
+
+        }
+
+        if (cols[j] === cols[cols.length]) {
+          arrRows.push(row);
+          i++;
+          break;
+        }
+      }
+    }
+    console.log('arrRows', arrRows)
+    return arrRows;
+  }
 
 }
