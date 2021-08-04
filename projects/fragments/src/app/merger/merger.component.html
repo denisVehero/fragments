@@ -1,1 +1,20 @@
-<p>merger works!</p>
+<div style="text-align:center" class="content">
+  <h1>
+    Welcome to Merge!
+  </h1>
+  <ul *ngFor="let value of sheetArr">
+    <li value="{{value}}">{{value}}
+      <input type="checkbox" id="{{value}}" name="sheet" [checked]="">
+    </li>
+  </ul>
+  <ul>
+    <li *ngFor="let column of visibleColumnsArr" value="{{column.value}}">{{column.value}}
+      <input type="checkbox" id="{{column.index}}" name="column">
+    </li>
+  </ul>
+
+  <!--<button type="button" (click)="getSheets()">Show sheets</button>
+  <button type="button" (click)="getVisibleColumns()">Show visible columns</button>-->
+  <button type="button" (click)="getCheckProperties()">Show choose properties</button>
+</div>
+

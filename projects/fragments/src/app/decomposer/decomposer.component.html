@@ -1,1 +1,11 @@
-<p>decomposer works!</p>
+
+<app-column-list></app-column-list>
+<button mat-raised-button color="primary" (click)="split()">Split</button>
+<button mat-raised-button color="primary" (click)="fillWithRandom()">fill wirth random color</button>
+<button mat-raised-button color="primary" (click)="copy()">Copy</button>
+<button mat-raised-button color="primary" (click)="test()">test</button>
+<mat-list>
+	<mat-list-item style="margin-top: 20px; height: auto; width: 100%;" *ngFor="let progressStatus of progressStatuses">
+		<app-progress-bar [progress]="progressStatus" (cancel)="cancel($event)"></app-progress-bar>
+	</mat-list-item>
+</mat-list>
