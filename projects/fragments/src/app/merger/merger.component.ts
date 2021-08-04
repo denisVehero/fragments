@@ -17,7 +17,7 @@ export class MergerComponent implements OnInit {
     OfficeEngine.getVisibleSheets().then((arr) => {
       this.sheetArr = arr;
     })
-    OfficeEngine.getVisibleColumns().then((arr) => {
+    OfficeEngine.getVisibleColumns('Sheet1').then((arr) => {
       this.visibleColumnsArr = arr;
     })
   }
