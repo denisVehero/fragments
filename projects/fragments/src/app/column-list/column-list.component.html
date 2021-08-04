@@ -1,7 +1,7 @@
 <cdk-virtual-scroll-viewport itemSize="50" class="example-viewport">
 	<mat-list>
 		<mat-list-item *cdkVirtualFor = "let item of list" class="example-item">
-			<mat-checkbox [(ngModel)]="item.checked">{{item.name}}</mat-checkbox>
+			<mat-checkbox [(ngModel)]="item.checked">{{item.value}}</mat-checkbox>
 		</mat-list-item>
 	</mat-list>
 </cdk-virtual-scroll-viewport>
