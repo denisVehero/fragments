@@ -7,8 +7,9 @@ import {OfficeEngine} from '../office-engine'
   styleUrls: ['./merger.component.scss']
 })
 export class MergerComponent implements OnInit {
-  sheetArr: string[] = []
+  sheetArr: string[] = [];
   visibleColumnsArr: any[] = [];
+  invisibleRowsArr: number[] = [];
 
   constructor() {
   }
@@ -17,20 +18,26 @@ export class MergerComponent implements OnInit {
     OfficeEngine.getVisibleSheets().then((arr) => {
       this.sheetArr = arr;
     })
+
     OfficeEngine.getVisibleColumns('Sheet1').then((arr) => {
       this.visibleColumnsArr = arr;
+    })
+
+    OfficeEngine.getInvisibleRows('Sheet1').then((arr) => {
+      console.log('arr', arr)
+      this.invisibleRowsArr = arr;
     })
   }
 
   getCheckProperties() {
     let checkedSheetsArr: any[] = [];
-    let uncheckedColumnsArr: any[] = [];
+    let checkedColumnsArr: any[] = [];
     let sheetCheckboxes = document.querySelectorAll("input[name=sheet]");
     let columnCheckboxes = document.querySelectorAll("input[name=column]");
     columnCheckboxes.forEach(column => {
       // @ts-ignore
       if (column.checked === true) {
-        uncheckedColumnsArr.push(+column.id);
+        checkedColumnsArr.push(+column.id);
       }
     })
     sheetCheckboxes.forEach(sheet => {
@@ -40,11 +47,15 @@ export class MergerComponent implements OnInit {
       }
     })
     checkedSheetsArr.forEach(sheet => {
-      this.getChooseProperties(sheet, uncheckedColumnsArr)
+      OfficeEngine.getInvisibleRows(sheet).then((arr) => {
+        this.invisibleRowsArr = arr;
+      })
+      //this.splitBySquares()
+      //this.getChooseProperties(sheet, uncheckedColumnsArr)
     })
   }
 
-  getChooseProperties(sheet: Excel.Worksheet, columns: Excel.ColumnProperties[]) {
+ /* getChooseProperties(sheet: Excel.Worksheet, columns: Excel.ColumnProperties[]) {
     Excel.run(context => {
       const worksheet = context.workbook.worksheets.getItem(`${sheet}`);
       const arrRows: Array<OfficeExtension.ClientResult<Excel.RowProperties[]>> = [];
@@ -69,7 +80,7 @@ export class MergerComponent implements OnInit {
 
       })
     })
-  }
+  }*/
 
   splitBySquares(rows: number[], columns: number[]) {
     let i: number;

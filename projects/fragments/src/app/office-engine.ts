@@ -148,20 +148,19 @@ export class OfficeEngine {
     })
   }
 
-  static getVisibleRows(sheet: string): Promise<any[]> {
+  static getInvisibleRows(sheet: string): Promise<any[]> {
     return Excel.run(context => {
       const worksheet = context.workbook.worksheets.getItem(sheet);
       worksheet.load(["items"]);
       const arrRows: Array<OfficeExtension.ClientResult<Excel.RowProperties[]>> = [];
       let range: Excel.Range;
       range = worksheet.getUsedRange();
-      range.load(["address"]);
       console.log('range', range)
-      arrRows.push(range.getColumnProperties({columnHidden: true, columnIndex: true}))
+      arrRows.push(range.getRowProperties({rowHidden: true, rowIndex: true}))
       return context.sync().then(() => {
         let visibleArr: any[] = [];
         arrRows.forEach(el => {
-          const visibleRows: Excel.RowProperties[] = el.value.filter(row => row.rowHidden === false);
+          const visibleRows: Excel.RowProperties[] = el.value.filter(row => row.rowHidden === true);
           visibleRows.forEach(row => {
             visibleArr.push(row.rowIndex);
           })
