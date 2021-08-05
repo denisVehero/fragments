@@ -131,7 +131,7 @@ export class OfficeEngine {
       let range: Excel.Range;
       range = worksheet.getUsedRange();
       range.load(["address"]);
-      console.log('range', range)
+      //console.log('range', range)
       arrColumns.push(range.getColumnProperties({columnHidden: true, columnIndex: true}))
       return context.sync().then(() => {
         let visibleArr: any[] = [];
