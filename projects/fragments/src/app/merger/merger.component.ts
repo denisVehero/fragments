@@ -60,16 +60,12 @@ export class MergerComponent implements OnInit {
     let j: number;
     let b: number;
     let arrRows: Bound[][] = [];
-    let row: Bound[] = [];
     let colCount: number = 1;
     let startRow: number = 0;
-    //let startCol: number = 0;
     let rowCount: number = 0;
-    //console.log('row 0', row)
-    //console.log('rows, cols', rows, cols)
     for (i = 0, i < rows.length + 1; ;) { debugger;
       b = i;
-
+      let row: Bound[] = [];
       if (i === 0) {
         startRow = 0;
         rowCount = rows[i];
@@ -113,7 +109,7 @@ export class MergerComponent implements OnInit {
           j += 1;
         }
 
-        if (j > cols.length) {
+        if (j >= cols.length) {
           arrRows.push(row);
 
           if(rowCount > 1) {
@@ -127,23 +123,6 @@ export class MergerComponent implements OnInit {
           rowCount = 1;
           break;
         }
-        /*{if (rows[i] === 0) {
-         if (cols[j] + colCount === cols[j + 1]) {
-           colCount += 1;
-           row.push(new Bound(cols[j], rows[i] + 1, colCount, rows[i + 1]));
-           j += 2;
-         } else {
-           colCount = 1;
-           row.push(new Bound(cols[j], rows[i] + 1, colCount, rows[i + 1] + 1));
-           j += 1;
-         }
-         if (cols[j] === cols[cols.length]) {
-           console.log('j break', j)
-           arrRows.push(row);
-           i++;
-           break;
-         }
-       } else*/
 
       }
       if (i >= rows.length || b + 1 > rows.length - 1) {
