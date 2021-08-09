@@ -16,9 +16,10 @@ export class DecomposerComponent implements OnInit {
 	n: number = 10;
 	sheetName: string ='';
     ngOnInit(): void {
-		
+
 		OfficeEngine.getCurrentSheet().then((res) => {
-			this.sheetName = res;
+			// @ts-ignore
+      this.sheetName = res;
 			OfficeEngine.getVisibleColumns(this.sheetName).then((ans) => {
 				this.columns = ans.map((val) => {val.checked = false; return val;})
 				this.columns[0].checked = true;
@@ -37,7 +38,7 @@ export class DecomposerComponent implements OnInit {
 		hiddenRows.push(100);
 		hiddenRows.unshift(-1);
 		console.log(checkedCols);
-		
+
 
 		let prev = checkedCols[0];
 		let deltaX = 0;
@@ -76,12 +77,12 @@ export class DecomposerComponent implements OnInit {
 						j = hiddenRows[counter] +1;
 						counter++;
 					}
-				}	
+				}
 				prev = checkedCols[i + 1];
 				if (i < checkedCols.length - 1) deltaX += checkedCols[i + 1].index - checkedCols[i].index -1;
 			}
 		}
-		
+
 	}
 
 
@@ -106,7 +107,7 @@ export class DecomposerComponent implements OnInit {
         for (let i = 0; i < 1000; i++){
             b2.push(new Bound(i, 0, 1, 1000, "Sheet2"))
         }
-		
+
         console.log("copy");
 		let p = new ProgressStatus(b1.length, 0, "copying");
 		this.progressStatuses.append(p);
@@ -115,10 +116,11 @@ export class DecomposerComponent implements OnInit {
 		});
     }
     test() {
+      //@ts-ignore
 		OfficeEngine.createWorksheet("as").then((n) => {
 			console.log(n);
 		})
-		
+
 		// OfficeEngine.getRangeValues([new Bound(0,0,1,10), new Bound(1,0,1,10)]).then((res) => {
 		// 	console.log(res);
 		// })
@@ -132,5 +134,5 @@ export class DecomposerComponent implements OnInit {
 		console.log(this.sheetName)
     }
 
-	
+
 }
