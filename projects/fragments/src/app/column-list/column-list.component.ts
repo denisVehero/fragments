@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy,Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy,Component, Input, OnInit } from '@angular/core';
 
 @Component({
 	selector: 'app-column-list',
@@ -8,13 +8,13 @@ import { ChangeDetectionStrategy,Component, OnInit } from '@angular/core';
 })
 export class ColumnListComponent implements OnInit {
 	constructor() { }
-	list: {index: number, name: string, checked: boolean}[] = [];
+	@Input() list: {index: number, name: string, checked: boolean}[] = [];
 	ngOnInit(): void {
-		for (let i = 0; i < 16000; i+=1){
-			this.list.push({index: i, name: "G", checked: false});
-		}
-		this.list[0].checked = true;
-		this.list[3].checked = true;
+		// for (let i = 0; i < 16000; i+=1){
+		// 	this.list.push({index: i, name: "G", checked: false});
+		// }
+		// this.list[0].checked = true;
+		// this.list[3].checked = true;
 	}
 
 }

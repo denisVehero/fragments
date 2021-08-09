@@ -17,6 +17,7 @@ import {MatCardModule} from '@angular/material/card';
 import {MatInputModule} from '@angular/material/input';
 import {MatCheckboxModule} from '@angular/material/checkbox';
 import { FormsModule } from '@angular/forms';
+import {MatRadioModule} from '@angular/material/radio';
 
 @NgModule({
   declarations: [
@@ -31,14 +32,15 @@ import { FormsModule } from '@angular/forms';
     AppRoutingModule,
     BrowserAnimationsModule,
     MatButtonModule,
-	  ScrollingModule,
-	  MatListModule,
-	  MatProgressBarModule,
-	  MatCardModule,
-	  MatInputModule,
-	  MatCheckboxModule,
-	  FormsModule,
-    MatButtonModule
+	ScrollingModule,
+	MatListModule,
+	MatProgressBarModule,
+	MatCardModule,
+	MatInputModule,
+	MatCheckboxModule,
+	FormsModule,
+    MatButtonModule,
+	MatRadioModule
   ],
   providers: [],
   bootstrap: [AppComponent]

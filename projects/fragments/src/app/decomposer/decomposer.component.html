@@ -1,9 +1,15 @@
 
-<app-column-list></app-column-list>
+<app-column-list [list]="columns"></app-column-list>
+<mat-radio-group [(ngModel)] = "mode">
+	<mat-radio-button [value]="0">Split by <input type="number" min="1" max="16000" step="1" class="byNField" [(ngModel)]="n"/> rows</mat-radio-button>
+	<mat-radio-button [value]="1">Split by key column <input type="text" ></mat-radio-button>
+</mat-radio-group>
+
 <button mat-raised-button color="primary" (click)="split()">Split</button>
 <button mat-raised-button color="primary" (click)="fillWithRandom()">fill wirth random color</button>
 <button mat-raised-button color="primary" (click)="copy()">Copy</button>
 <button mat-raised-button color="primary" (click)="test()">test</button>
+
 <mat-list>
 	<mat-list-item style="margin-top: 20px; height: auto; width: 100%;" *ngFor="let progressStatus of progressStatuses">
 		<app-progress-bar [progress]="progressStatus" (cancel)="cancel($event)"></app-progress-bar>
