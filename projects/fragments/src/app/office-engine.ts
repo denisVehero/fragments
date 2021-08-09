@@ -5,7 +5,7 @@ export class OfficeEngine {
 
 	static maxCells = 5000;
 
-	static getCurrentSheet() {
+	static getCurrentSheet():Promise<String> {
 		return Excel.run((ctx) => {
 			let worksheet = ctx.workbook.worksheets.getActiveWorksheet();
 			worksheet.load(["name"])
@@ -82,24 +82,23 @@ export class OfficeEngine {
 		}).then(() => console.log("adas33"));
 	}
 
-	static createWorksheet(workSheetName: String):Promise<string> {
+	static createWorksheet(workSheetName: string[]):Promise<string[]> {
+		let ans: string[] = [];
 		return Excel.run(async (ctx) => {
-			let t = ctx.workbook.worksheets.getItemOrNullObject(String(workSheetName)), i = 0;
-			await ctx.sync();
-			while (!t.isNullObject) {
-				i++;
-				t = ctx.workbook.worksheets.getItemOrNullObject(String(workSheetName + "(" + i.toString() + ")"));
+			while (workSheetName.length > 0) {
+				let name = workSheetName.shift();
+				if (!name) break;
+				let t = ctx.workbook.worksheets.getItemOrNullObject(String(name));
 				await ctx.sync();
+				if (t.isNullObject) {
+					ctx.workbook.worksheets.add(String(name))
+					ans.push(name)
+				}
 			}
-			let n ="";
-			if (i != 0) n = workSheetName + "(" + i.toString() + ")"
-				else n = workSheetName.toString();
-			ctx.workbook.worksheets.add(String(n))
-			return ctx.sync(n)
+			return ctx.sync(ans)
 		})
 	}
-
-	static getRangeValues(ranges: Bound[], progress?: ProgressStatus): Promise<any[][]> {
+	static getRangesValues(ranges: Bound[], progress?: ProgressStatus): Promise<any[][]> {
 		let task: Bound[] = [];
 		for (let i = 0; i < ranges.length; i++) {
 			if (ranges[i].colCount * ranges[i].rowCount > this.maxCells) {
@@ -199,7 +198,7 @@ export class OfficeEngine {
 		})
 	}
 
-	static fromNumToChar(num: number) {
+	static fromNumToChar(num: number):string {
 		let letterAddress;
 		let secondLetter, firstLetter: string;
 		if (num > 26) {
