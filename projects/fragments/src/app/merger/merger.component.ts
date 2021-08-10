@@ -23,6 +23,7 @@ export class MergerComponent implements OnInit {
     OfficeEngine.getVisibleColumns('Sheet1').then((arr) => {
       this.visibleColumnsArr = arr;
     })
+
   }
 
   getCheckProperties(): void {
@@ -43,65 +44,78 @@ export class MergerComponent implements OnInit {
       }
     })
 
-    checkedSheetsArr.forEach(sheet => {
+    OfficeEngine.createWorksheet(['Sheet100']).then((name) => {
+      debugger;
       let sheetName: string = '';
-      let arrOfBounds: Bound[] = [];
-      let arrOfNewBounds: Bound[] = [];
+
       let startRow: number = 0;
       let startCol: number = 0;
       let rowCount: number = 0;
       let colCount: number = 0;
       let boundName: string;
       let nameCurSheet: string;
+      sheetName = name[0];//debugger;
 
-      OfficeEngine.getInvisibleRows(sheet).then((arr) => {
-        this.invisibleRowsArr = arr;
-        console.log('rows+ columns', this.invisibleRowsArr, checkedColumnsArr);
-        arrOfBounds = this.splitByVisibleBounds(this.invisibleRowsArr, checkedColumnsArr);
-      })
+      checkedSheetsArr.forEach(sheet => {
 
-      OfficeEngine.createWorksheet(['Sheet100']).then((name) => {
-        sheetName = name[0];
-
-        arrOfBounds.forEach(bound => {
-          if (bound.sheetName != nameCurSheet) {
-            startRow += rowCount;
-            startCol = bound.col;
-          } else {
-            if (bound.col === 0) {
-              startCol = 0;
-            } else if (startCol === 0) {
-              startCol += colCount;
-              startRow = startRow;
-            } else if (startCol === bound.col + startCol) {
-              startCol += colCount;
-            }
-            if (bound.row === 0) {
-              startRow = 0;
-            } else if (startRow === 0) {
-              startRow += rowCount;
-            }
-            else if (bound.row != startRow) {
-              startRow += rowCount;
-            } /*else {
-              startRow = bound.row;
+        let arrOfBounds: Bound[] = [];
+        let arrOfNewBounds: Bound[] = [];
+        OfficeEngine.getInvisibleRows(sheet).then((arr) => {
+          console.log('sheet', sheet)
+          this.invisibleRowsArr = arr;
+          arrOfBounds = this.splitByVisibleBounds(this.invisibleRowsArr, checkedColumnsArr, sheet);
+          console.log('rows+ columns', this.invisibleRowsArr, checkedColumnsArr);
+          arrOfBounds.forEach(bound => {
+            if (bound.sheetName != nameCurSheet && nameCurSheet !== undefined) {
+              debugger;
+              startRow += rowCount - 1;//debugger;
               startCol = bound.col;
+            } else {
+              if (bound.col === 0) {//debugger;
+                startCol = 0;
+                startRow += rowCount;//debugger;
+              } else if (startCol === 0 || startCol + colCount < bound.col) {//debugger;
+                startCol += colCount;
+                startRow = startRow;//debugger;
+              } /*else if (startCol === bound.col + startCol) {debugger;
+              startCol += colCount;
             }*/
-          }
-          rowCount = bound.rowCount;
-          colCount = bound.colCount;
-          boundName = sheetName;
-          nameCurSheet = bound.sheetName;
-          //finalRow = startRow + rowCount + 1;
-          arrOfNewBounds.push(new Bound(startCol, startRow, colCount, rowCount, boundName));
-          debugger;
+              /*else if () {debugger;
+                startRow = startRow;debugger;
+              }else {debugger;
+                startRow += rowCount;debugger;
+              }*/
+              /*if (bound.row === 0) {
+                startRow = 0;
+              } else if (startRow === 0) {debugger;
+                startRow += rowCount;
+              } else if (bound.row != startRow) {
+                startRow += rowCount;
+              } else {
+                startRow = bound.row;
+                startCol = bound.col;
+              }*/
+            }
+            rowCount = bound.rowCount;
+            colCount = bound.colCount;
+            boundName = sheetName;
+            debugger;
+            nameCurSheet = bound.sheetName;
+            debugger;
+            //finalRow = startRow + rowCount + 1;
+            arrOfNewBounds.push(new Bound(startCol, startRow, colCount, rowCount, boundName));
+            debugger;
+
+          })
+          console.log('arrOfNewBounds', arrOfNewBounds)
+          OfficeEngine.copyValues(arrOfBounds, arrOfNewBounds).then()
         })
-        OfficeEngine.copyValues(arrOfBounds, arrOfNewBounds).then()
+
       })
     })
   }
 
-  splitByVisibleBounds(rows: number[], cols: number[]): Bound[] {
+  splitByVisibleBounds(rows: number[], cols: number[], sheet: string): Bound[] {
     let i: number;
     let j: number;
     let b: number;
@@ -110,6 +124,7 @@ export class MergerComponent implements OnInit {
     let startRow: number = 0;
     let rowCount: number = 0;
     for (i = 0, i < rows.length + 1; ;) {
+      //debugger
       b = i;
 
       if (i === 0) {
@@ -117,20 +132,34 @@ export class MergerComponent implements OnInit {
         rowCount = rows[i];
       } else {
         if (rows[i] === 0 && rows[i + 1] === 1) {
+          //debugger
           startRow = rows[i + 1] + 1;
           rowCount = rows[i + 1] - startRow - 1;
         } else if (rows[i] === 0) {
+          //debugger
           startRow = rows[i] + 1;
           rowCount = rows[i + 1] - startRow - 1;
         } /*else if (i === rows.length + 1) {
         rowCount = rows[i] - rows[i - 1];
       }*/ else {
+          //debugger
           rowCount = rows[i] - rows[i - 1] - 1;
         }
       }
-      while (rows[b] + 1 === rows[b + 1]) {
+      if (i === row.length - 1) {
+        rowCount = rows[i] - startRow;
+      }
+      while (rows[b] + 1 === rows[b + 1] && i !== 0) {
         rowCount += 1;
         b += 1;
+      }
+      while (rows[b] + 1 === rows[b + 1] && i - 1 === 0) {
+        startRow += 1;
+        b += 1;
+      }
+      if (i - 1 === 0) {
+        startRow += rowCount + 1;
+        rowCount = rows[b + 1] - rows[b] - 1;
       }
 
       for (j = 0, j < cols.length; ;) {
@@ -145,8 +174,9 @@ export class MergerComponent implements OnInit {
           rowCount = 1;
         }
 
-        row.push(new Bound(cols[j], startRow, colCount, rowCount));
-        console.log('jhlkjl', new Bound(cols[j], startRow, colCount, rowCount))
+        row.push(new Bound(cols[j], startRow, colCount, rowCount, sheet));
+        //debugger;
+        console.log('jhlkjl', new Bound(cols[j], startRow, colCount, rowCount, sheet))
 
         if (colCount > 1) {
           j = a + 1;
@@ -170,7 +200,7 @@ export class MergerComponent implements OnInit {
         }
 
       }
-      if (i >= rows.length || b + 1 > rows.length - 1) {
+      if (i > rows.length || b + 1 > rows.length - 1 || startRow > rows[rows.length - 1]) {
         break;
       }
     }
