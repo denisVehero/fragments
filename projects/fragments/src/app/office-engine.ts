@@ -5,6 +5,13 @@ export class OfficeEngine {
 
 	static maxCells = 5000;
 
+	static setOnSheetActivated(f: (args: any) => Promise<any>): Promise<any> {
+		return Excel.run((ctx) => {
+			ctx.workbook.worksheets.onActivated.add(f);
+			f({});
+			return ctx.sync();
+		})
+	}
 	static getCurrentSheet():Promise<String> {
 		return Excel.run((ctx) => {
 			let worksheet = ctx.workbook.worksheets.getActiveWorksheet();
@@ -91,8 +98,8 @@ export class OfficeEngine {
 				let t = ctx.workbook.worksheets.getItemOrNullObject(String(name));
 				await ctx.sync();
 				if (t.isNullObject) {
-					ctx.workbook.worksheets.add(String(name))
-					ans.push(name)
+					ctx.workbook.worksheets.add(String(name));
+					ans.push(name);
 				}
 			}
 			return ctx.sync(ans)
@@ -139,7 +146,6 @@ export class OfficeEngine {
 			let range: Excel.Range;
 			range = worksheet.getUsedRange();
 			range.load(["address"]);
-			console.log('range', range)
 			arrColumns.push(range.getColumnProperties({ columnHidden: true, columnIndex: true }))
 			return context.sync().then(() => {
 				let visibleArr: any[] = [];
@@ -163,15 +169,18 @@ export class OfficeEngine {
 		  const arrRows: Array<OfficeExtension.ClientResult<Excel.RowProperties[]>> = [];
 		  let range: Excel.Range;
 		  range = worksheet.getUsedRange();
+		  range.load("rowCount")
 		  arrRows.push(range.getRowProperties({rowHidden: true, rowIndex: true}))
 		  return context.sync().then(() => {
 			let visibleArr: any[] = [];
+			console.log(range.rowCount)
 			arrRows.forEach(el => {
 			  const visibleRows: Excel.RowProperties[] = el.value.filter(row => row.rowHidden === true);
 			  visibleRows.forEach(row => {
 				visibleArr.push(row.rowIndex);
 			  })
 			})
+			visibleArr.push(range.rowCount)
 			return visibleArr;
 		  })
 		})
