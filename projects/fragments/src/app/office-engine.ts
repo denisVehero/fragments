@@ -5,6 +5,13 @@ export class OfficeEngine {
 
 	static maxCells = 5000;
 
+	static setOnSheetActivated(f: (args: any) => Promise<any>): Promise<any> {
+		return Excel.run((ctx) => {
+			ctx.workbook.worksheets.onActivated.add(f);
+			f({});
+			return ctx.sync();
+		})
+	}
 	static getCurrentSheet():Promise<String> {
 		return Excel.run((ctx) => {
 			let worksheet = ctx.workbook.worksheets.getActiveWorksheet();
@@ -91,8 +98,8 @@ export class OfficeEngine {
 				let t = ctx.workbook.worksheets.getItemOrNullObject(String(name));
 				await ctx.sync();
 				if (t.isNullObject) {
-					ctx.workbook.worksheets.add(String(name))
-					ans.push(name)
+					ctx.workbook.worksheets.add(String(name));
+					ans.push(name);
 				}
 			}
 			return ctx.sync(ans)
@@ -131,52 +138,53 @@ export class OfficeEngine {
 		})
 	}
 
-  static getVisibleColumns(sheet: string): Promise<any[]> {
-    return Excel.run(context => {
-      const worksheet = context.workbook.worksheets.getItem(sheet);
-      worksheet.load(["items"]);
-      const arrColumns: Array<OfficeExtension.ClientResult<Excel.ColumnProperties[]>> = [];
-      let range: Excel.Range;
-      range = worksheet.getUsedRange();
-      range.load(["address"]);
-      //console.log('range', range)
-      arrColumns.push(range.getColumnProperties({columnHidden: true, columnIndex: true}))
-      return context.sync().then(() => {
-        let visibleArr: any[] = [];
-        arrColumns.forEach(el => {
-          const visibleColumns: Excel.ColumnProperties[] = el.value.filter(column => column.columnHidden === false);
-          visibleColumns.forEach(column => {
-            if (column.columnIndex != undefined) {
-              visibleArr.push({index: column.columnIndex, value: this.fromNumToChar(column.columnIndex + 1)});
-            }
-          })
-        })
-        return visibleArr;
-      })
-    })
-  }
+	static getVisibleColumns(sheet: string): Promise<any[]> {
+		return Excel.run(context => {
+			const worksheet = context.workbook.worksheets.getItem(sheet);
+			worksheet.load(["items"]);
+			const arrColumns: Array<OfficeExtension.ClientResult<Excel.ColumnProperties[]>> = [];
+			let range: Excel.Range;
+			range = worksheet.getUsedRange();
+			range.load(["address"]);
+			arrColumns.push(range.getColumnProperties({ columnHidden: true, columnIndex: true }))
+			return context.sync().then(() => {
+				let visibleArr: any[] = [];
+				arrColumns.forEach(el => {
+					const visibleColumns: Excel.ColumnProperties[] = el.value.filter(column => column.columnHidden === false);
+					visibleColumns.forEach(column => {
+						if (column.columnIndex != undefined) {
+							visibleArr.push({ index: column.columnIndex, value: this.fromNumToChar(column.columnIndex + 1) });
+						}
+					})
+				})
+				return visibleArr;
+			})
+		})
+	}
 
-  static getInvisibleRows(sheet: string): Promise<any[]> {
-    return Excel.run(context => {
-      const worksheet = context.workbook.worksheets.getItem(sheet);
-      worksheet.load(["items"]);
-      const arrRows: Array<OfficeExtension.ClientResult<Excel.RowProperties[]>> = [];
-      let range: Excel.Range;
-      range = worksheet.getUsedRange();
-      console.log('range', range)
-      arrRows.push(range.getRowProperties({rowHidden: true, rowIndex: true}))
-      return context.sync().then(() => {
-        let visibleArr: any[] = [];
-        arrRows.forEach(el => {
-          const visibleRows: Excel.RowProperties[] = el.value.filter(row => row.rowHidden === true);
-          visibleRows.forEach(row => {
-            visibleArr.push(row.rowIndex);
-          })
-        })
-        return visibleArr;
-      })
-    })
-  }
+	static getInvisibleRows(sheet: string): Promise<any[]> {
+		return Excel.run(context => {
+		  const worksheet = context.workbook.worksheets.getItem(sheet);
+		  worksheet.load(["items"]);
+		  const arrRows: Array<OfficeExtension.ClientResult<Excel.RowProperties[]>> = [];
+		  let range: Excel.Range;
+		  range = worksheet.getUsedRange();
+		  range.load("rowCount")
+		  arrRows.push(range.getRowProperties({rowHidden: true, rowIndex: true}))
+		  return context.sync().then(() => {
+			let visibleArr: any[] = [];
+			console.log(range.rowCount)
+			arrRows.forEach(el => {
+			  const visibleRows: Excel.RowProperties[] = el.value.filter(row => row.rowHidden === true);
+			  visibleRows.forEach(row => {
+				visibleArr.push(row.rowIndex);
+			  })
+			})
+			visibleArr.push(range.rowCount)
+			return visibleArr;
+		  })
+		})
+	  }
 
 	static getVisibleSheets(): Promise<Array<string>> {
 		return Excel.run(context => {
