@@ -78,28 +78,44 @@ export class OfficeEngine {
 		return workbook.worksheets.getItem(adr.sheetName).getRangeByIndexes(adr.row, adr.col, adr.rowCount, adr.colCount);
 	}
 
-	static fillWithSomething(rangeAdr: Bound) {
+	static fillWithSomething(rangeAdr: Bound[]) {
 		console.log(rangeAdr)
-		return Excel.run((ctx) => {
-			let w = ctx.workbook.worksheets.getItem(rangeAdr.sheetName);
-			let r = this.getRange(ctx.workbook, rangeAdr);
-			let color = "#" + ("00000" + Math.floor(Math.random() * 16581375).toString(16)).slice(-6);
-			r.format.fill.color = color;
-			return ctx.sync();
-		}).then(() => console.log("adas33"));
+		return Excel.run(async (ctx) => {
+			let i = 0;
+			while (rangeAdr.length > 0) {
+				let r1 = rangeAdr.pop();
+				if (!r1) break;
+				i+= r1.colCount * r1.rowCount;
+				let w = ctx.workbook.worksheets.getItem(r1.sheetName);
+				let r = this.getRange(ctx.workbook, r1);
+				let color = "#" + ("00000" + Math.floor(Math.random() * 16581375).toString(16)).slice(-6);
+				r.format.fill.color = color;
+				if (i > 4000) {
+					await ctx.sync();
+					i = 0;
+					console.log(rangeAdr.length)
+				}
+			}
+			await ctx.sync();
+			console.log("filled")
+		});
 	}
-
+	
 	static createWorksheet(workSheetName: string[]):Promise<string[]> {
 		let ans: string[] = [];
 		return Excel.run(async (ctx) => {
+			let t = [];
 			while (workSheetName.length > 0) {
 				let name = workSheetName.shift();
 				if (!name) break;
-				let t = ctx.workbook.worksheets.getItemOrNullObject(String(name));
-				await ctx.sync();
-				if (t.isNullObject) {
-					ctx.workbook.worksheets.add(String(name));
-					ans.push(name);
+				t.push({w: ctx.workbook.worksheets.getItemOrNullObject(String(name)), name: name});
+				
+			}
+			await ctx.sync();
+			for(let i = 0; i < t.length; i ++) {
+				if (t[i].w.isNullObject) {
+					ctx.workbook.worksheets.add(String(t[i].name));
+					ans.push(t[i].name);
 				}
 			}
 			return ctx.sync(ans)
