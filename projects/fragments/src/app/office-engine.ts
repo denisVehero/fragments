@@ -100,23 +100,26 @@ export class OfficeEngine {
 			console.log("filled")
 		});
 	}
-	
-	static createWorksheet(workSheetName: string[]):Promise<string[]> {
+	static createWorksheet(workSheetName?: string[]):Promise<string[]> {
 		let ans: string[] = [];
 		return Excel.run(async (ctx) => {
 			let t = [];
-			while (workSheetName.length > 0) {
-				let name = workSheetName.shift();
-				if (!name) break;
-				t.push({w: ctx.workbook.worksheets.getItemOrNullObject(String(name)), name: name});
-				
-			}
-			await ctx.sync();
-			for(let i = 0; i < t.length; i ++) {
-				if (t[i].w.isNullObject) {
-					ctx.workbook.worksheets.add(String(t[i].name));
-					ans.push(t[i].name);
+			if (workSheetName) {
+				while (workSheetName.length > 0) {
+					let name = workSheetName.shift();
+					if (!name) break;
+					t.push({w: ctx.workbook.worksheets.getItemOrNullObject(String(name)), name: name});
+					
 				}
+				await ctx.sync();
+				for(let i = 0; i < t.length; i ++) {
+					if (t[i].w.isNullObject) {
+						ctx.workbook.worksheets.add(t[i].name);
+						ans.push(t[i].name);
+					}
+				}
+			} else {
+				ctx.workbook.worksheets.add();
 			}
 			return ctx.sync(ans)
 		})
