@@ -119,7 +119,9 @@ export class OfficeEngine {
 					}
 				}
 			} else {
-				ctx.workbook.worksheets.add();
+				let r = ctx.workbook.worksheets.add();
+				r.load("name")
+				return ctx.sync().then(() => [r.name]);
 			}
 			return ctx.sync(ans)
 		})
