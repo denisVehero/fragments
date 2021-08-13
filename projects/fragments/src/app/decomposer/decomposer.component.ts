@@ -23,7 +23,7 @@ export class DecomposerComponent implements OnInit {
     constructor(private _cdr: ChangeDetectorRef) { }
 	progressStatuses: LinkedList<ProgressStatus> = new LinkedList<ProgressStatus>();
 	columns: Column[] = [];
-	mode: number = 0;
+	mode: number = 1;
 	maxRows: number = 10;
 	sheetName: string = '';
 	keys: {index: number, name: string, checked: boolean}[] = [];
@@ -35,8 +35,8 @@ export class DecomposerComponent implements OnInit {
 				this.keys = JSON.parse(JSON.stringify(this.columns));
 				this.columns[0].checked = true;
 				// this.columns[1].checked = true;
-				this.columns[10].checked = true;
-				this.columns[20].checked = true;
+				this.columns[1].checked = true;
+				this.columns[2].checked = true;
 				this._cdr.detectChanges();
 			})
 		})
@@ -51,8 +51,30 @@ export class DecomposerComponent implements OnInit {
 	 * // TODO: delete all "this" refs with lets
 	 */
 	async splitButtonClick() {
-		console.log(this.maxRows)
-		let p = new ProgressStatus(10, 0, "split by " + this.maxRows);
+		let arr: any = [10, 5];
+		let splitters = [
+			function* (n: number): Generator<number, number, number> {
+				while (true) {
+					yield n;
+				}
+			},
+			function* (arr: number[]): Generator<number, number, number> {
+				while (true) {
+					for(let i = 0; i < arr.length; i++) {
+						if(yield arr[i]) break;
+					}
+				}
+			}
+		], params: any[] = [
+			this.mode,
+			arr
+		]
+		this.split(splitters[this.mode](params[this.mode]));
+		
+	}
+
+	async split(splitter: Generator<number, number, number>) {
+		let p = new ProgressStatus(10, 0, "split");
 		this.progressStatuses.append(p);
 		let checkedCols = this.columns.filter((v) => v.checked)
 		let hiddenRows = await OfficeEngine.getInvisibleRows(this.sheetName);
@@ -65,10 +87,12 @@ export class DecomposerComponent implements OnInit {
 		let deltaX = prev.index;
 		for(let i = 0; i <= checkedCols.length - 1; i++) {
 			//left col: checkedCols[i].index, colcount: checkedCols[i + 1].index - checkedCols[i].index
+			// test one column
 			if (i == checkedCols.length - 1 || checkedCols[i + 1].index - checkedCols[i].index > 1){
 				let counter = 1;
 				let sheetCounter = 0;
-				let remaining = this.maxRows;
+				let remaining = splitter.next().value;
+				let sheetRows = remaining;
 				let j = hiddenRows[0] + 1;
 				while (j < hiddenRows[hiddenRows.length - 1]){
 					let dj = Math.min(remaining, hiddenRows[counter] - j)
@@ -82,24 +106,25 @@ export class DecomposerComponent implements OnInit {
 					
 					let tmp2 = new Bound(
 						prev.index - deltaX,
-						this.maxRows - remaining,
+						sheetRows - remaining,
 						checkedCols[i].index - prev.index + 1,
 						dj,
-						sheetCounter * this.maxRows + "..." + ((sheetCounter + 1) * this.maxRows - 1)
+						sheetCounter + ".." + (sheetCounter + sheetRows - 1)
 					)
 					sourceRanges.push(tmp);
 					destinationRanges.push(tmp2)
 					j += dj;
 					remaining = remaining - dj;
 					if (remaining == 0) {
-						remaining = this.maxRows
-						sheetCounter++;
+						remaining = splitter.next().value;
+						sheetRows = remaining;
+						sheetCounter+= sheetRows;
 					}
 					if (j >= hiddenRows[counter]) {
 						j = hiddenRows[counter] +1;
 						counter++;
 					}
-				}	
+				}
 				prev = checkedCols[i + 1];
 				if (i < checkedCols.length - 1) deltaX += checkedCols[i + 1].index - checkedCols[i].index -1;
 			}
@@ -120,9 +145,7 @@ export class DecomposerComponent implements OnInit {
 				console.log("Split complited")
 			})
 		})
-		
 	}
-
 	delete() {
 		//only for debug purposes
 		Excel.run(async (ctx) => {
@@ -153,39 +176,23 @@ export class DecomposerComponent implements OnInit {
 		await OfficeEngine.fillWithSomething(bounds);
     }
     test() {
-		//only for testing purposes
-		// console.log(this.n);
-		// let prevSelect: boolean = true;
-		// Excel.run((ctx) => {
-		// 	ctx.workbook.worksheets.onSelectionChanged.add((ev:any) => {
-		// 		let r = /\d/.test(ev.address)
-		// 		console.log(r);
-		// 		if (r && !prevSelect) {
-		// 			prevSelect = false;
-		// 			return this.columnStateUpdate();
-		// 		}
-		// 		prevSelect = r;
-		// 		return Promise.resolve();
-		// 	})
-		// 	return ctx.sync();
-		// })
-		OfficeEngine.createWorksheet(new Set("1000...1009")).then((df) => console.log(df))
-		// Excel.run((ctx) => {
-		// 	let l = ctx.workbook.worksheets.getActiveWorksheet().tables;
-		// 	l.load("items");
-		// 	return ctx.sync().then(() => {
-		// 		let l1 = l.items[0].columns;
-		// 		l1.load("items")
-		// 		return ctx.sync().then(() => {
-		// 			console.log(l1.items.length)
-		// 			l1.items[0].load("name");
-		// 			return ctx.sync().then(() => {
-		// 				console.log(l1.items[0].name)
-		// 			})
-		// 		})
-		// 	});
-		// })
+		function* n(n: number): Generator<number, string, number> {
+			let i = 0;
+			while(true){
+				i+=n;
+				let c = (yield i);
+				if (c || c==0) i = c - n;
+			}
+		}
+
+		this.ff(n(10))
     }
 
-	
+	ff(n: Generator<number, string, number>) {
+		for(let i = 0; i < 10; i++) {
+			let c = n.next();
+			console.log(c.value);
+			if (c.value==50) n.next(0)
+		}
+	}
 }
