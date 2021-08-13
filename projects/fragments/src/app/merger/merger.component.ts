@@ -5,23 +5,32 @@ import context = Office.context;
 @Component({
   selector: 'app-merger',
   templateUrl: './merger.component.html',
-  styleUrls: ['./merger.component.scss']
+  styleUrls: ['./merger.component.scss'],
 })
+
 export class MergerComponent implements OnInit {
-  sheetArr: string[] = [];
-  visibleColumnsArr: any[] = [];
+  sheetArr: { index: number, name: string, checked: boolean }[] = [];
   invisibleRowsArr: number[] = [];
+  visibleColumnsArr: { index: number, name: string, checked: boolean }[] = []
 
   constructor() {
   }
 
   ngOnInit(): void {
     OfficeEngine.getVisibleSheets().then((arr) => {
-      this.sheetArr = arr;
+      this.sheetArr = arr.map((val) => {
+        val.checked = false;
+        return val;
+      });
+      this.sheetArr[0].checked = true;
     })
 
     OfficeEngine.getVisibleColumns('Sheet1').then((arr) => {
-      this.visibleColumnsArr = arr;
+      this.visibleColumnsArr = arr.map((val) => {
+        val.checked = false;
+        return val;
+      })
+      this.visibleColumnsArr[1].checked = true;
     })
 
   }
@@ -29,23 +38,21 @@ export class MergerComponent implements OnInit {
   getCheckProperties(): void {
     let checkedSheetsArr: any[] = [];
     let checkedColumnsArr: any[] = [];
-    let sheetCheckboxes = document.querySelectorAll("input[name=sheet]");
-    let columnCheckboxes = document.querySelectorAll("input[name=column]");
-    columnCheckboxes.forEach(column => {
-      // @ts-ignore
-      if (column.checked === true) {
-        checkedColumnsArr.push(+column.id);
+    this.visibleColumnsArr.forEach(column => {
+      if (column.checked) {
+        checkedColumnsArr.push(column.index);
       }
     })
-    sheetCheckboxes.forEach(sheet => {
-      // @ts-ignore
-      if (sheet.checked === true) {
-        checkedSheetsArr.push(sheet.id);
+    this.sheetArr.map(sheet => {
+      if (sheet.checked) {
+        // @ts-ignore
+        checkedSheetsArr.push(sheet.value);
       }
     })
 
-    OfficeEngine.createWorksheet(['Sheet100']).then((name) => {
+    OfficeEngine.createWorksheet().then((name) => {
       debugger;
+      console.log('name', name)
       let sheetName: string = '';
 
       let startRow: number = 0;
@@ -68,24 +75,19 @@ export class MergerComponent implements OnInit {
           arrOfBounds.forEach(bound => {
             debugger;
             if (bound.sheetName != nameCurSheet && nameCurSheet !== undefined) {
-              //debugger;
-              startRow += rowCount;//debugger;
+              debugger;
+              startRow += rowCount;debugger;
               startCol = bound.col;
             } else {
-              if (bound.col === 0) {//debugger;
+              if (bound.col === 0) {debugger;
                 startCol = 0;
-                startRow += rowCount;//debugger;
-              } else if (startCol === 0 || startCol + colCount < bound.col) {//debugger;
-                startCol += colCount;
-                startRow = startRow;//debugger;
-              } /*else if (startCol === bound.col + startCol) {debugger;
-              startCol += colCount;
-            }*/
-              /*else if () {debugger;
-                startRow = startRow;debugger;
-              }else {debugger;
                 startRow += rowCount;debugger;
-              }*/
+              } /*else if (startCol === 0 && ) {
+
+              } */else if (startCol === 0 || startCol + colCount < bound.col) {debugger;
+                startCol += colCount;
+                startRow = startRow;debugger;
+              }
               /*if (bound.row === 0) {
                 startRow = 0;
               } else if (startRow === 0) {debugger;
@@ -103,7 +105,6 @@ export class MergerComponent implements OnInit {
             //debugger;
             nameCurSheet = bound.sheetName;
             //debugger;
-            //finalRow = startRow + rowCount + 1;
             arrOfNewBounds.push(new Bound(startCol, startRow, colCount, rowCount, boundName));
             debugger;
 
@@ -119,14 +120,12 @@ export class MergerComponent implements OnInit {
   splitByVisibleBounds(rows: number[], cols: number[], sheet: string): Bound[] {
     let i: number;
     let j: number;
-    let count: number;
     let row: Bound[] = [];
     let colCount: number = 1;
     let startRow: number = 0;
     let rowCount: number = 0;
     for (i = -1, i < rows.length; ;) {
-      debugger
-      count = 1;
+      //debugger
 
       if (i === -1) {
         startRow = 0;
@@ -135,11 +134,7 @@ export class MergerComponent implements OnInit {
       } else if (i === rows.length - 1) {
         rowCount = rows[i] - rows[i - 1] - 1;
       } else {
-        /*if (rows[i] === 0 && rows[i + 1] === 1) {
-          debugger
-          startRow = rows[i + 1] + 1;
-          rowCount = rows[i + 1] - startRow - 1;
-        } else if (rows[i] === 0) {
+        /*if (rows[i] === 0) {
           debugger
           startRow = rows[i] + 1;
           rowCount = rows[i + 1] - startRow - 1;
@@ -147,7 +142,7 @@ export class MergerComponent implements OnInit {
         rowCount = rows[i] - rows[i - 1];
       }*!/ else*/
         {
-          debugger
+          //debugger
           rowCount = rows[i + 1] - rows[i] - 1;
         }
       }
@@ -155,9 +150,9 @@ export class MergerComponent implements OnInit {
       while (rows[i] + 1 === rows[i + 1] && i !== 0) {
         startRow += 1;
         i += 1;
-        //count += 1;
         rowCount = rows[i + 1] - rows[i] - 1;
       }
+
       if (i >= rows.length || startRow >= rows[rows.length - 1]) {
         break;
       }
@@ -173,7 +168,7 @@ export class MergerComponent implements OnInit {
 
         if (rowCount) {
           row.push(new Bound(cols[j], startRow, colCount, rowCount, sheet));
-          debugger;
+          //debugger;
         }
         console.log('jhlkjl', new Bound(cols[j], startRow, colCount, rowCount, sheet))
 

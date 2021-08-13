@@ -109,7 +109,7 @@ export class OfficeEngine {
 					let name = workSheetName.shift();
 					if (!name) break;
 					t.push({w: ctx.workbook.worksheets.getItemOrNullObject(String(name)), name: name});
-					
+
 				}
 				await ctx.sync();
 				for(let i = 0; i < t.length; i ++) {
@@ -207,11 +207,11 @@ export class OfficeEngine {
 		})
 	  }
 
-	static getVisibleSheets(): Promise<Array<string>> {
+	static getVisibleSheets(): Promise<any[]> {
 		return Excel.run(context => {
 			const sheets = context.workbook.worksheets;
 			sheets.load(["items"]);
-			let sheetArr: string[] = [];
+			let sheetArr: any[] = [];
 			return context.sync().then(() => {
 				sheets.items.forEach(sheet => {
 					sheet.load(["name", "visibility"])
@@ -219,7 +219,7 @@ export class OfficeEngine {
 				return context.sync().then(() => {
 					sheets.items.forEach(sheet => {
 						if (sheet.visibility === Excel.SheetVisibility.visible) {
-							sheetArr.push(sheet.name);
+							sheetArr.push({value: sheet.name});
 						}
 					})
 					return sheetArr;
