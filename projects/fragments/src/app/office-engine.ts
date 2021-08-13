@@ -48,7 +48,6 @@ export class OfficeEngine {
 			}
 		}
 		return Excel.run(async (ctx) => {
-
 			let r1: Excel.Range, r2: Excel.Range;
 			let counter = 0;
 			for (let i = 0; i < task.length; i++) {
@@ -79,38 +78,37 @@ export class OfficeEngine {
 	}
 
 	static fillWithSomething(rangeAdr: Bound[]) {
-		console.log(rangeAdr)
 		return Excel.run(async (ctx) => {
 			let i = 0;
+			let l = 0;
 			while (rangeAdr.length > 0) {
 				let r1 = rangeAdr.pop();
+				l++;
 				if (!r1) break;
 				i+= r1.colCount * r1.rowCount;
 				let w = ctx.workbook.worksheets.getItem(r1.sheetName);
 				let r = this.getRange(ctx.workbook, r1);
 				let color = "#" + ("00000" + Math.floor(Math.random() * 16581375).toString(16)).slice(-6);
 				r.format.fill.color = color;
+				r.values = new Array(r1.rowCount).fill(new Array(r1.colCount).fill(l));
 				if (i > 4000) {
 					await ctx.sync();
-					i = 0;
 					console.log(rangeAdr.length)
+					i = 0;
 				}
 			}
 			await ctx.sync();
 			console.log("filled")
 		});
 	}
-	static createWorksheet(workSheetName?: string[]):Promise<string[]> {
+	static createWorksheet(workSheetName?: Set<string>):Promise<string[]> {
 		let ans: string[] = [];
 		return Excel.run(async (ctx) => {
-			let t = [];
+			let t: any[] = [];
 			if (workSheetName) {
-				while (workSheetName.length > 0) {
-					let name = workSheetName.shift();
-					if (!name) break;
-					t.push({w: ctx.workbook.worksheets.getItemOrNullObject(String(name)), name: name});
-					
-				}
+				workSheetName.forEach(val => {
+					t.push({w: ctx.workbook.worksheets.getItemOrNullObject(String(val)), name: val});
+				})
 				await ctx.sync();
 				for(let i = 0; i < t.length; i ++) {
 					if (t[i].w.isNullObject) {
@@ -194,7 +192,6 @@ export class OfficeEngine {
 		  arrRows.push(range.getRowProperties({rowHidden: true, rowIndex: true}))
 		  return context.sync().then(() => {
 			let visibleArr: any[] = [];
-			console.log(range.rowCount)
 			arrRows.forEach(el => {
 			  const visibleRows: Excel.RowProperties[] = el.value.filter(row => row.rowHidden === true);
 			  visibleRows.forEach(row => {

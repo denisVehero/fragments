@@ -2,6 +2,17 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { LinkedList } from 'linked-list-typescript';
 import { Bound, OfficeEngine } from '../office-engine';
 import { ProgressStatus } from "../progress-statuses";
+
+class Column {
+	index: number;
+	name: string;
+	checked: boolean;
+	constructor(index: number, name: string, checked: boolean){
+		this.index = index;
+		this.name = name;
+		this.checked = checked;
+	}
+}
 @Component({
     selector: 'app-decomposer',
     templateUrl: './decomposer.component.html',
@@ -11,32 +22,37 @@ export class DecomposerComponent implements OnInit {
 
     constructor(private _cdr: ChangeDetectorRef) { }
 	progressStatuses: LinkedList<ProgressStatus> = new LinkedList<ProgressStatus>();
-	columns: {index: number, name: string, checked: boolean}[] = [];
+	columns: Column[] = [];
 	mode: number = 0;
-	n: number = 10;
+	maxRows: number = 10;
 	sheetName: string = '';
-
-    ngOnInit(): void {
-		OfficeEngine.setOnSheetActivated( (arr) => {
-			return OfficeEngine.getCurrentSheet().then((res) => {
-				this.sheetName = res.toString();
-				OfficeEngine.getVisibleColumns(this.sheetName).then((ans) => {
-					this.columns = ans.map((val) => {val.checked = false; return val;})
-					this.columns[0].checked = true;
-					this.columns[1].checked = true;
-					this.columns[2].checked = true;
-					this.columns[3].checked = true;
-					this._cdr.detectChanges();
-				})
+	keys: {index: number, name: string, checked: boolean}[] = [];
+	columnStateUpdate() {
+		return OfficeEngine.getCurrentSheet().then((res) => {
+			this.sheetName = res.toString();
+			OfficeEngine.getVisibleColumns(this.sheetName).then((ans) => {
+				this.columns = ans.map((val) => {val.checked = false; return val;})
+				this.keys = JSON.parse(JSON.stringify(this.columns));
+				this.columns[0].checked = true;
+				// this.columns[1].checked = true;
+				this.columns[10].checked = true;
+				this.columns[20].checked = true;
+				this._cdr.detectChanges();
 			})
+		})
+	}
+    ngOnInit(): void {
+		//TODO: lazy load for columns list
+		OfficeEngine.setOnSheetActivated( (arr) => {
+			return this.columnStateUpdate();
 		})
     }
 	/**
 	 * // TODO: delete all "this" refs with lets
 	 */
 	async splitButtonClick() {
-		console.log(this.n)
-		let p = new ProgressStatus(10, 0, "split by " + this.n);
+		console.log(this.maxRows)
+		let p = new ProgressStatus(10, 0, "split by " + this.maxRows);
 		this.progressStatuses.append(p);
 		let checkedCols = this.columns.filter((v) => v.checked)
 		let hiddenRows = await OfficeEngine.getInvisibleRows(this.sheetName);
@@ -46,13 +62,13 @@ export class DecomposerComponent implements OnInit {
 		hiddenRows.unshift(-1);
 		
 		let prev = checkedCols[0];
-		let deltaX = 0;
+		let deltaX = prev.index;
 		for(let i = 0; i <= checkedCols.length - 1; i++) {
 			//left col: checkedCols[i].index, colcount: checkedCols[i + 1].index - checkedCols[i].index
-			if (i ==checkedCols.length - 1 || checkedCols[i + 1].index - checkedCols[i].index > 1){
+			if (i == checkedCols.length - 1 || checkedCols[i + 1].index - checkedCols[i].index > 1){
 				let counter = 1;
 				let sheetCounter = 0;
-				let remaining = this.n;
+				let remaining = this.maxRows;
 				let j = hiddenRows[0] + 1;
 				while (j < hiddenRows[hiddenRows.length - 1]){
 					let dj = Math.min(remaining, hiddenRows[counter] - j)
@@ -63,19 +79,20 @@ export class DecomposerComponent implements OnInit {
 						dj,
 						this.sheetName
 					);
-					sourceRanges.push(tmp);
+					
 					let tmp2 = new Bound(
 						prev.index - deltaX,
-						this.n - remaining,
+						this.maxRows - remaining,
 						checkedCols[i].index - prev.index + 1,
 						dj,
-						sheetCounter * this.n + "..." + ((sheetCounter + 1) * this.n - 1)
+						sheetCounter * this.maxRows + "..." + ((sheetCounter + 1) * this.maxRows - 1)
 					)
+					sourceRanges.push(tmp);
 					destinationRanges.push(tmp2)
 					j += dj;
 					remaining = remaining - dj;
 					if (remaining == 0) {
-						remaining = this.n
+						remaining = this.maxRows
 						sheetCounter++;
 					}
 					if (j >= hiddenRows[counter]) {
@@ -87,11 +104,12 @@ export class DecomposerComponent implements OnInit {
 				if (i < checkedCols.length - 1) deltaX += checkedCols[i + 1].index - checkedCols[i].index -1;
 			}
 		}
-		let sheets =[];
+		let sheets = new Set<string>();
 		for(let  i= 0; i < destinationRanges.length; i++) {
-			sheets.push(destinationRanges[i].sheetName);
+			sheets.add(destinationRanges[i].sheetName);
 		}
 		p.planed= sourceRanges.length;
+		console.log(sheets)
 		OfficeEngine.createWorksheet(sheets).then((e) => {
 			console.log("created: ", e);
 			
@@ -106,6 +124,7 @@ export class DecomposerComponent implements OnInit {
 	}
 
 	delete() {
+		//only for debug purposes
 		Excel.run(async (ctx) => {
 			let w = ctx.workbook.worksheets;
 			w.load("items")
@@ -123,6 +142,7 @@ export class DecomposerComponent implements OnInit {
 			else this.progressStatuses.remove(p);
 	}
     async fillWithRandom() {
+		//only for debug purposes
         let bounds: Bound[] = new Array(10);
         for (let  i = 0; i < 100; i++){
             for (let j = 0; j < 100; j++){
@@ -132,25 +152,24 @@ export class DecomposerComponent implements OnInit {
         }
 		await OfficeEngine.fillWithSomething(bounds);
     }
-    copyButtonClick() {
-        let b1 = [];
-        let b2 = [];
-        for (let i = 0; i < 1000; i++){
-            b1.push(new Bound(i, 0, 1, 1000, "Sheet1"))
-        }
-        for (let i = 0; i < 1000; i++){
-            b2.push(new Bound(i, 0, 1, 1000, "Sheet2"))
-        }
-		
-        console.log("copy");
-		let p = new ProgressStatus(b1.length, 0, "copying");
-		this.progressStatuses.append(p);
-		OfficeEngine.copyValues(b1, b2, p).then(() => {
-			console.log("finished in ")
-		});
-    }
     test() {
-		console.log(this.n);
+		//only for testing purposes
+		// console.log(this.n);
+		// let prevSelect: boolean = true;
+		// Excel.run((ctx) => {
+		// 	ctx.workbook.worksheets.onSelectionChanged.add((ev:any) => {
+		// 		let r = /\d/.test(ev.address)
+		// 		console.log(r);
+		// 		if (r && !prevSelect) {
+		// 			prevSelect = false;
+		// 			return this.columnStateUpdate();
+		// 		}
+		// 		prevSelect = r;
+		// 		return Promise.resolve();
+		// 	})
+		// 	return ctx.sync();
+		// })
+		OfficeEngine.createWorksheet(new Set("1000...1009")).then((df) => console.log(df))
 		// Excel.run((ctx) => {
 		// 	let l = ctx.workbook.worksheets.getActiveWorksheet().tables;
 		// 	l.load("items");
