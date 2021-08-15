@@ -79,7 +79,8 @@ export class MergerComponent implements OnInit {
               startRow += rowCount;debugger;
               startCol = bound.col;
             } else {
-              if (bound.col === 0) {debugger;
+              console.log('arrOfBounds[0]', arrOfBounds[0])
+              if (bound.col === 0 || arrOfBounds[0]) {debugger;
                 startCol = 0;
                 startRow += rowCount;debugger;
               } /*else if (startCol === 0 && ) {
