@@ -2,6 +2,17 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { LinkedList } from 'linked-list-typescript';
 import { Bound, OfficeEngine } from '../office-engine';
 import { ProgressStatus } from "../progress-statuses";
+import {MatSnackBar} from '@angular/material/snack-bar';
+class Column {
+	index: number;
+	name: string;
+	checked: boolean;
+	constructor(index: number, name: string, checked: boolean){
+		this.index = index;
+		this.name = name;
+		this.checked = checked;
+	}
+}
 @Component({
     selector: 'app-decomposer',
     templateUrl: './decomposer.component.html',
@@ -9,36 +20,106 @@ import { ProgressStatus } from "../progress-statuses";
 })
 export class DecomposerComponent implements OnInit {
 
-    constructor(private _cdr: ChangeDetectorRef) { }
+    constructor(private _cdr: ChangeDetectorRef, private _snackBar: MatSnackBar) { }
 	progressStatuses: LinkedList<ProgressStatus> = new LinkedList<ProgressStatus>();
-	columns: {index: number, name: string, checked: boolean}[] = [];
+	columns: Column[] = [];
 	mode: number = 0;
-	n: number = 10;
+	maxRows: number = 1000;
 	sheetName: string = '';
+	keys: Column[] = [];
+	valid: boolean = true;
 
-    ngOnInit(): void {
-		OfficeEngine.setOnSheetActivated( (arr) => {
-			return OfficeEngine.getCurrentSheet().then((res) => {
-				this.sheetName = res.toString();
-				OfficeEngine.getVisibleColumns(this.sheetName).then((ans) => {
-					this.columns = ans.map((val) => {val.checked = false; return val;})
-					this.columns[0].checked = true;
-					this.columns[1].checked = true;
-					this.columns[2].checked = true;
-					this.columns[3].checked = true;
-					this._cdr.detectChanges();
-				})
+	showErrorAlert(message: string) {
+		this._snackBar.open(message,"Ok")
+	}
+	columnStateUpdate() {
+		return OfficeEngine.getCurrentSheet().then((res) => {
+			this.sheetName = res.toString();
+			OfficeEngine.getVisibleColumns(this.sheetName).then((ans) => {
+				this.columns = ans.map((val) => {val.checked = false; return val;})
+				console.log("got ", this.columns, " columns")
+				this.keys = JSON.parse(JSON.stringify(this.columns));
+				let n = Math.min(250, this.columns.length)
+				for(let i = 0; i < n; i++) {
+					this.columns[i].checked = true;
+				}
+				this.keys[0].checked = true;
+				this._cdr.detectChanges();
 			})
+		})
+	}
+    ngOnInit(): void {
+		//TODO: lazy load for columns list
+		OfficeEngine.setOnSheetActivated( (arr) => {
+			return this.columnStateUpdate();
 		})
     }
 	/**
 	 * // TODO: delete all "this" refs with lets
 	 */
 	async splitButtonClick() {
-		console.log(this.n)
-		let p = new ProgressStatus(10, 0, "split by " + this.n);
-		this.progressStatuses.append(p);
+		let splitters = [
+			function* (n: any): Generator<number, number, number> {
+				while (true) {
+					yield n;
+				}
+			},
+			function* (arr: any): Generator<number, number, number> {
+				while (true) {
+					for(let i = 0; i < arr.length; i++) {
+						if(yield arr[i]) break;
+					}
+				}
+			}
+		], params: any = this.mode;
+		if (this.mode == 1) {
+			this.getKeyIntervals().then((intervals) => {
+				if (intervals.length == 0) {
+					return;
+				}
+				this.split(splitters[this.mode](intervals));
+			})
+		} else
+			this.split(splitters[this.mode](this.maxRows));
+	}
+	async getKeyIntervals(): Promise<number[]> {
+		let res: number[] = [];
+		let task = [];
+		let usedRowCount: number;
+		usedRowCount = await OfficeEngine.getUsedRowCount()
+		for (let i = 0; i < this.keys.length; i++) {
+			if (this.keys[i].checked) task.push(new Bound(this.keys[i].index, 0, 1, usedRowCount, this.sheetName))
+		}
+		if (task.length < 1) {
+			this.showErrorAlert("no keys set")
+			return Promise.resolve([])
+		}
+		return OfficeEngine.getRangesValues(task).then((res: any[][]):number[] => {
+			let ans:number[] = [];
+			let c = 0;
+			for(let i = 0; i < res[0].length; i++) {
+				res[0][i] = res[0][i].toString()
+				for(let j = 1; j < res.length; j++) {
+					res[0][i] += res[j][i].toString();
+				}
+				if (i!=0 && res[0][i - 1] != res[0][i]) {
+					ans.push(i - c);
+					c = i;
+				}
+			}
+			console.log(res[0])
+			if (res[0].length - 1 - c > 0) ans.push(res[0].length - 1 - c)
+			return ans;
+		})
+
+	}
+	async split(splitter: Generator<number, number, number>) {
+
 		let checkedCols = this.columns.filter((v) => v.checked)
+		if (checkedCols.length < 1) {
+			this.showErrorAlert("Not columns checked");
+			return;
+		}
 		let hiddenRows = await OfficeEngine.getInvisibleRows(this.sheetName);
 		let sourceRanges: Bound[] = [];
 		let destinationRanges: Bound[] = [];
@@ -46,15 +127,19 @@ export class DecomposerComponent implements OnInit {
 		hiddenRows.unshift(-1);
 
 		let prev = checkedCols[0];
-		let deltaX = 0;
-		for(let i = 0; i <= checkedCols.length - 1; i++) {
+		let deltaX = prev.index;
+		let work = 0;
+		for(let i = 0; i < checkedCols.length; i++) {
 			//left col: checkedCols[i].index, colcount: checkedCols[i + 1].index - checkedCols[i].index
-			if (i ==checkedCols.length - 1 || checkedCols[i + 1].index - checkedCols[i].index > 1){
+			// test one column
+			if (i == checkedCols.length - 1 || checkedCols[i + 1].index - checkedCols[i].index > 1){
 				let counter = 1;
 				let sheetCounter = 0;
-				let remaining = this.n;
+				let remaining = splitter.next().value;
+				let sheetRows = remaining;
 				let j = hiddenRows[0] + 1;
 				while (j < hiddenRows[hiddenRows.length - 1]){
+					console.log(remaining)
 					let dj = Math.min(remaining, hiddenRows[counter] - j)
 					let tmp = new Bound(
 						prev.index,
@@ -63,20 +148,23 @@ export class DecomposerComponent implements OnInit {
 						dj,
 						this.sheetName
 					);
-					sourceRanges.push(tmp);
+
 					let tmp2 = new Bound(
 						prev.index - deltaX,
-						this.n - remaining,
+						sheetRows - remaining,
 						checkedCols[i].index - prev.index + 1,
 						dj,
-						sheetCounter * this.n + "..." + ((sheetCounter + 1) * this.n - 1)
+						sheetCounter + ".." + (sheetCounter + sheetRows - 1)
 					)
+					work += tmp.colCount * tmp.rowCount;
+					sourceRanges.push(tmp);
 					destinationRanges.push(tmp2)
 					j += dj;
 					remaining = remaining - dj;
 					if (remaining == 0) {
-						remaining = this.n
-						sheetCounter++;
+						remaining = splitter.next().value;
+						sheetRows = remaining;
+						sheetCounter+= sheetRows;
 					}
 					if (j >= hiddenRows[counter]) {
 						j = hiddenRows[counter] +1;
@@ -87,11 +175,13 @@ export class DecomposerComponent implements OnInit {
 				if (i < checkedCols.length - 1) deltaX += checkedCols[i + 1].index - checkedCols[i].index -1;
 			}
 		}
-		let sheets =[];
+		let p = new ProgressStatus(work, 0, "split");
+		this.progressStatuses.append(p);
+		let sheets = new Set<string>();
 		for(let  i= 0; i < destinationRanges.length; i++) {
-			sheets.push(destinationRanges[i].sheetName);
+			sheets.add(destinationRanges[i].sheetName);
 		}
-		p.planed= sourceRanges.length;
+
 		OfficeEngine.createWorksheet(sheets).then((e) => {
 			console.log("created: ", e);
 
@@ -102,10 +192,9 @@ export class DecomposerComponent implements OnInit {
 				console.log("Split complited")
 			})
 		})
-
 	}
-
 	delete() {
+		//only for debug purposes
 		Excel.run(async (ctx) => {
 			let w = ctx.workbook.worksheets;
 			w.load("items")
@@ -123,6 +212,7 @@ export class DecomposerComponent implements OnInit {
 			else this.progressStatuses.remove(p);
 	}
     async fillWithRandom() {
+		//only for debug purposes
         let bounds: Bound[] = new Array(10);
         for (let  i = 0; i < 100; i++){
             for (let j = 0; j < 100; j++){
@@ -132,41 +222,15 @@ export class DecomposerComponent implements OnInit {
         }
 		await OfficeEngine.fillWithSomething(bounds);
     }
-    copyButtonClick() {
-        let b1 = [];
-        let b2 = [];
-        for (let i = 0; i < 1000; i++){
-            b1.push(new Bound(i, 0, 1, 1000, "Sheet1"))
-        }
-        for (let i = 0; i < 1000; i++){
-            b2.push(new Bound(i, 0, 1, 1000, "Sheet2"))
-        }
-
-        console.log("copy");
-		let p = new ProgressStatus(b1.length, 0, "copying");
-		this.progressStatuses.append(p);
-		OfficeEngine.copyValues(b1, b2, p).then(() => {
-			console.log("finished in ")
-		});
-    }
     test() {
-		console.log(this.n);
-		// Excel.run((ctx) => {
-		// 	let l = ctx.workbook.worksheets.getActiveWorksheet().tables;
-		// 	l.load("items");
-		// 	return ctx.sync().then(() => {
-		// 		let l1 = l.items[0].columns;
-		// 		l1.load("items")
-		// 		return ctx.sync().then(() => {
-		// 			console.log(l1.items.length)
-		// 			l1.items[0].load("name");
-		// 			return ctx.sync().then(() => {
-		// 				console.log(l1.items[0].name)
-		// 			})
-		// 		})
-		// 	});
-		// })
+		console.log(Bound.splitBound(new Bound(0, 0, 250, 1000, "sheet1"), 5000, 5000))
     }
 
-
+	ff(n: Generator<number, string, number>) {
+		for(let i = 0; i < 10; i++) {
+			let c = n.next();
+			console.log(c.value);
+			if (c.value==50) n.next(0)
+		}
+	}
 }

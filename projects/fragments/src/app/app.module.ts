@@ -18,6 +18,8 @@ import {MatInputModule} from '@angular/material/input';
 import {MatCheckboxModule} from '@angular/material/checkbox';
 import { FormsModule } from '@angular/forms';
 import {MatRadioModule} from '@angular/material/radio';
+import {MatSnackBarModule} from '@angular/material/snack-bar';
+
 @NgModule({
   declarations: [
     AppComponent,
@@ -39,7 +41,8 @@ import {MatRadioModule} from '@angular/material/radio';
 	MatCheckboxModule,
 	FormsModule,
     MatButtonModule,
-	MatRadioModule
+	MatRadioModule,
+	MatSnackBarModule
   ],
   providers: [],
   bootstrap: [AppComponent]

@@ -13,7 +13,7 @@ export class ProgressBarComponent implements OnInit {
   	constructor() { }
 
   	ngOnInit(): void {
-		console.log(this.progress)
+		
   	}
 	cancelClick() {
 		this.cancel.emit(this.progress);

@@ -11,16 +11,19 @@
 				max="16000" 
 				step="1" 
 				class="byNField" 
-				[(ngModel)]="n"/> 
+				[(ngModel)]="maxRows"/> 
 		rows
 	</mat-radio-button>
-	<mat-radio-button [value]="1">Split by key column <input type="text" ></mat-radio-button>
+	<mat-radio-button [value]="1">Split by key columns</mat-radio-button>
 </mat-radio-group>
-
+<app-column-list *ngIf="mode==1"[list]="keys"></app-column-list>
 <button mat-raised-button color="primary" (click)="splitButtonClick()">Split</button>
-<button mat-raised-button color="primary" (click)="fillWithRandom()">fill wirth random color</button>
+
+<!-- for debugging -->
+<button mat-raised-button color="primary" (click)="fillWithRandom()">fill wirth random</button>
 <button mat-raised-button color="primary" (click)="test()">test</button>
 <button mat-raised-button color="primary" (click)="delete()">delete all other worksheets</button>
+<!-- end of debugging -->
 <mat-list>
 	<mat-list-item style="margin-top: 20px; height: auto; width: 100%;" *ngFor="let progressStatus of progressStatuses">
 		<app-progress-bar [progress]="progressStatus" (cancel)="cancelProgress($event)"></app-progress-bar>

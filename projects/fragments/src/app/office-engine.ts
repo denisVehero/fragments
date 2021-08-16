@@ -19,6 +19,13 @@ export class OfficeEngine {
 			return ctx.sync().then(() => worksheet.name)
 		})
 	}
+	static getUsedRowCount(): Promise<number> {
+		return Excel.run((ctx) => {
+			let r = ctx.workbook.worksheets.getActiveWorksheet().getUsedRange().load("rowCount")
+
+			return ctx.sync().then(() => r.rowCount)
+		})
+	}
 	/**
 	 * copies data. Each bound must be the same size
 	 * @param sourceInd indices of source columns
@@ -41,23 +48,23 @@ export class OfficeEngine {
 				let tmp1 = Bound.splitBound(sourceInd[i], this.maxCells, this.maxCells);
 				let tmp2 = Bound.splitBound(toInd[i], this.maxCells, this.maxCells);
 				for (let j = 0; j < tmp1.length; j++) {
-					task.push(new TruckBounds(tmp1[i], tmp2[i]));
+					task.push(new TruckBounds(tmp1[j], tmp2[j]));
 				}
 			} else {
 				task.push(new TruckBounds(sourceInd[i], toInd[i]))
+
 			}
 		}
+		console.log(task);
 		return Excel.run(async (ctx) => {
-
 			let r1: Excel.Range, r2: Excel.Range;
 			let counter = 0;
 			for (let i = 0; i < task.length; i++) {
 				r1 = this.getRange(ctx.workbook, task[i].source);
-				;
 				r2 = this.getRange(ctx.workbook, task[i].destination);
 				counter += task[i].source.colCount * task[i].source.rowCount;
 				r2.copyFrom(r1);
-				if (progress) progress.complited++;
+				if (progress) progress.complited += task[i].source.colCount * task[i].source.rowCount;
 				if (counter > this.maxCells) {
 					await ctx.sync();
 					counter = 0;
@@ -79,38 +86,37 @@ export class OfficeEngine {
 	}
 
 	static fillWithSomething(rangeAdr: Bound[]) {
-		console.log(rangeAdr)
 		return Excel.run(async (ctx) => {
 			let i = 0;
+			let l = 0;
 			while (rangeAdr.length > 0) {
 				let r1 = rangeAdr.pop();
+				l++;
 				if (!r1) break;
 				i+= r1.colCount * r1.rowCount;
 				let w = ctx.workbook.worksheets.getItem(r1.sheetName);
 				let r = this.getRange(ctx.workbook, r1);
 				let color = "#" + ("00000" + Math.floor(Math.random() * 16581375).toString(16)).slice(-6);
 				r.format.fill.color = color;
+				r.values = new Array(r1.rowCount).fill(new Array(r1.colCount).fill(l+ "000000"));
 				if (i > 4000) {
 					await ctx.sync();
-					i = 0;
 					console.log(rangeAdr.length)
+					i = 0;
 				}
 			}
 			await ctx.sync();
 			console.log("filled")
 		});
 	}
-	static createWorksheet(workSheetName?: string[]):Promise<string[]> {
+	static createWorksheet(workSheetName?: Set<string>):Promise<string[]> {
 		let ans: string[] = [];
 		return Excel.run(async (ctx) => {
-			let t = [];
+			let t: any[] = [];
 			if (workSheetName) {
-				while (workSheetName.length > 0) {
-					let name = workSheetName.shift();
-					if (!name) break;
-					t.push({w: ctx.workbook.worksheets.getItemOrNullObject(String(name)), name: name});
-
-				}
+				workSheetName.forEach(val => {
+					t.push({w: ctx.workbook.worksheets.getItemOrNullObject(String(val)), name: val});
+				})
 				await ctx.sync();
 				for(let i = 0; i < t.length; i ++) {
 					if (t[i].w.isNullObject) {
@@ -130,7 +136,7 @@ export class OfficeEngine {
 		let task: Bound[] = [];
 		for (let i = 0; i < ranges.length; i++) {
 			if (ranges[i].colCount * ranges[i].rowCount > this.maxCells) {
-				let tmp = Bound.splitBound(ranges[i], this.maxCells, this.maxCells);
+				let tmp = Bound.splitBound(ranges[i], 2500, 2500);
 				for (let j = 0; j < tmp.length; j++) {
 					task.push(tmp[j]);
 				}
@@ -145,12 +151,12 @@ export class OfficeEngine {
 			for (let i = 0; i < task.length; i++) {
 				r1 = this.getRange(ctx.workbook, task[i]);
 				counter += task[i].colCount * task[i].rowCount;
-				r1.load("values");
-				res.push(r1)
+				res.push(r1.load("values"));
 				if (progress) progress.complited++;
 				if (counter > this.maxCells) {
 					await ctx.sync();
 					counter = 0;
+					console.log(res.length)
 				}
 			}
 			return ctx.sync().then(() => {
@@ -194,7 +200,6 @@ export class OfficeEngine {
 		  arrRows.push(range.getRowProperties({rowHidden: true, rowIndex: true}))
 		  return context.sync().then(() => {
 			let visibleArr: any[] = [];
-			console.log(range.rowCount)
 			arrRows.forEach(el => {
 			  const visibleRows: Excel.RowProperties[] = el.value.filter(row => row.rowHidden === true);
 			  visibleRows.forEach(row => {
@@ -247,6 +252,8 @@ export class OfficeEngine {
 	}
 }
 
+
+
 export class Bound {
 	col: number;
 	row: number;
@@ -285,17 +292,15 @@ export class Bound {
 			let p = (Math.floor(x) * Math.floor(y)) * el * divider2;
 			return { value: p, rows: el, cols: divider2 };
 		});
-
 		cur = dividers[0];
 		for (let i = 1; i < dividers.length; i++) {
 			if (cur.value < dividers[i].value) {
 				cur = dividers[i]
 			}
 		}
-
-		for (let i = b.row; i <= b.row + b.colCount - 1; i = cur.rows + i) {
-			for (let j = b.col; j <= b.col + b.colCount - 1; j = cur.cols + j) {
-				result.push(new Bound(j, i, Math.min(b.col + b.colCount - j, cur.cols), Math.min(b.row + b.rowCount - i, cur.rows)));
+		for (let i = b.row; i < b.row + b.rowCount ; i += cur.rows) {
+			for (let j = b.col; j < b.col + b.colCount; j += cur.cols) {
+				result.push(new Bound(j, i, Math.min(b.col + b.colCount - j, cur.cols), Math.min(b.row + b.rowCount - i, cur.rows), b.sheetName));
 			}
 		}
 		return result;
