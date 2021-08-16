@@ -2,7 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { LinkedList } from 'linked-list-typescript';
 import { Bound, OfficeEngine } from '../office-engine';
 import { ProgressStatus } from "../progress-statuses";
-
+import {MatSnackBar} from '@angular/material/snack-bar';
 class Column {
 	index: number;
 	name: string;
@@ -20,23 +20,30 @@ class Column {
 })
 export class DecomposerComponent implements OnInit {
 
-    constructor(private _cdr: ChangeDetectorRef) { }
+    constructor(private _cdr: ChangeDetectorRef, private _snackBar: MatSnackBar) { }
 	progressStatuses: LinkedList<ProgressStatus> = new LinkedList<ProgressStatus>();
 	columns: Column[] = [];
-	mode: number = 1;
-	maxRows: number = 10;
+	mode: number = 0;
+	maxRows: number = 1000;
 	sheetName: string = '';
-	keys: {index: number, name: string, checked: boolean}[] = [];
+	keys: Column[] = [];
+	valid: boolean = true;
+
+	showErrorAlert(message: string) {
+		this._snackBar.open(message,"Ok")
+	}
 	columnStateUpdate() {
 		return OfficeEngine.getCurrentSheet().then((res) => {
 			this.sheetName = res.toString();
 			OfficeEngine.getVisibleColumns(this.sheetName).then((ans) => {
 				this.columns = ans.map((val) => {val.checked = false; return val;})
+				console.log("got ", this.columns, " columns")
 				this.keys = JSON.parse(JSON.stringify(this.columns));
-				this.columns[0].checked = true;
-				// this.columns[1].checked = true;
-				this.columns[1].checked = true;
-				this.columns[2].checked = true;
+				let n = Math.min(250, this.columns.length)
+				for(let i = 0; i < n; i++) {
+					this.columns[i].checked = true;
+				}
+				this.keys[0].checked = true;
 				this._cdr.detectChanges();
 			})
 		})
@@ -51,32 +58,68 @@ export class DecomposerComponent implements OnInit {
 	 * // TODO: delete all "this" refs with lets
 	 */
 	async splitButtonClick() {
-		let arr: any = [10, 5];
 		let splitters = [
-			function* (n: number): Generator<number, number, number> {
+			function* (n: any): Generator<number, number, number> {
 				while (true) {
 					yield n;
 				}
 			},
-			function* (arr: number[]): Generator<number, number, number> {
+			function* (arr: any): Generator<number, number, number> {
 				while (true) {
 					for(let i = 0; i < arr.length; i++) {
 						if(yield arr[i]) break;
 					}
 				}
 			}
-		], params: any[] = [
-			this.mode,
-			arr
-		]
-		this.split(splitters[this.mode](params[this.mode]));
+		], params: any = this.mode;
+		if (this.mode == 1) {
+			this.getKeyIntervals().then((intervals) => {
+				if (intervals.length == 0) {
+					return;
+				}
+				this.split(splitters[this.mode](intervals));		
+			})
+		} else
+			this.split(splitters[this.mode](this.maxRows));
+	}
+	async getKeyIntervals(): Promise<number[]> {
+		let res: number[] = [];
+		let task = [];
+		let usedRowCount: number;
+		usedRowCount = await OfficeEngine.getUsedRowCount()
+		for (let i = 0; i < this.keys.length; i++) {
+			if (this.keys[i].checked) task.push(new Bound(this.keys[i].index, 0, 1, usedRowCount, this.sheetName))
+		}
+		if (task.length < 1) {
+			this.showErrorAlert("no keys set")
+			return Promise.resolve([])
+		}
+		return OfficeEngine.getRangesValues(task).then((res: any[][]):number[] => {
+			let ans:number[] = [];
+			let c = 0;
+			for(let i = 0; i < res[0].length; i++) {
+				res[0][i] = res[0][i].toString()
+				for(let j = 1; j < res.length; j++) {
+					res[0][i] += res[j][i].toString();
+				}
+				if (i!=0 && res[0][i - 1] != res[0][i]) {
+					ans.push(i - c);
+					c = i;
+				}
+			}
+			console.log(res[0])
+			if (res[0].length - 1 - c > 0) ans.push(res[0].length - 1 - c)
+			return ans;
+		})
 		
 	}
-
 	async split(splitter: Generator<number, number, number>) {
-		let p = new ProgressStatus(10, 0, "split");
-		this.progressStatuses.append(p);
+		
 		let checkedCols = this.columns.filter((v) => v.checked)
+		if (checkedCols.length < 1) {
+			this.showErrorAlert("Not columns checked");
+			return;
+		}
 		let hiddenRows = await OfficeEngine.getInvisibleRows(this.sheetName);
 		let sourceRanges: Bound[] = [];
 		let destinationRanges: Bound[] = [];
@@ -85,7 +128,8 @@ export class DecomposerComponent implements OnInit {
 		
 		let prev = checkedCols[0];
 		let deltaX = prev.index;
-		for(let i = 0; i <= checkedCols.length - 1; i++) {
+		let work = 0;
+		for(let i = 0; i < checkedCols.length; i++) {
 			//left col: checkedCols[i].index, colcount: checkedCols[i + 1].index - checkedCols[i].index
 			// test one column
 			if (i == checkedCols.length - 1 || checkedCols[i + 1].index - checkedCols[i].index > 1){
@@ -95,6 +139,7 @@ export class DecomposerComponent implements OnInit {
 				let sheetRows = remaining;
 				let j = hiddenRows[0] + 1;
 				while (j < hiddenRows[hiddenRows.length - 1]){
+					console.log(remaining)
 					let dj = Math.min(remaining, hiddenRows[counter] - j)
 					let tmp = new Bound(
 						prev.index,
@@ -111,6 +156,7 @@ export class DecomposerComponent implements OnInit {
 						dj,
 						sheetCounter + ".." + (sheetCounter + sheetRows - 1)
 					)
+					work += tmp.colCount * tmp.rowCount;
 					sourceRanges.push(tmp);
 					destinationRanges.push(tmp2)
 					j += dj;
@@ -129,12 +175,13 @@ export class DecomposerComponent implements OnInit {
 				if (i < checkedCols.length - 1) deltaX += checkedCols[i + 1].index - checkedCols[i].index -1;
 			}
 		}
+		let p = new ProgressStatus(work, 0, "split");
+		this.progressStatuses.append(p);
 		let sheets = new Set<string>();
 		for(let  i= 0; i < destinationRanges.length; i++) {
 			sheets.add(destinationRanges[i].sheetName);
 		}
-		p.planed= sourceRanges.length;
-		console.log(sheets)
+
 		OfficeEngine.createWorksheet(sheets).then((e) => {
 			console.log("created: ", e);
 			
@@ -176,16 +223,7 @@ export class DecomposerComponent implements OnInit {
 		await OfficeEngine.fillWithSomething(bounds);
     }
     test() {
-		function* n(n: number): Generator<number, string, number> {
-			let i = 0;
-			while(true){
-				i+=n;
-				let c = (yield i);
-				if (c || c==0) i = c - n;
-			}
-		}
-
-		this.ff(n(10))
+		console.log(Bound.splitBound(new Bound(0, 0, 250, 1000, "sheet1"), 5000, 5000))
     }
 
 	ff(n: Generator<number, string, number>) {
