@@ -98,7 +98,7 @@ export class OfficeEngine {
 				let r = this.getRange(ctx.workbook, r1);
 				let color = "#" + ("00000" + Math.floor(Math.random() * 16581375).toString(16)).slice(-6);
 				r.format.fill.color = color;
-				r.values = new Array(r1.rowCount).fill(new Array(r1.colCount).fill(l+ "000000"));
+				r.values = new Array(r1.rowCount).fill(new Array(r1.colCount).fill( "1000000000"));
 				if (i > 4000) {
 					await ctx.sync();
 					console.log(rangeAdr.length)
@@ -168,13 +168,16 @@ export class OfficeEngine {
 	static getVisibleColumns(sheet: string): Promise<any[]> {
 		return Excel.run(context => {
 			const worksheet = context.workbook.worksheets.getItem(sheet);
-			worksheet.load(["items"]);
+			worksheet.load(["items", "tables"]);
+			let tableHeaders = worksheet.tables.getItem('').getHeaderRowRange();
+      console.log('tableHeaders', tableHeaders)
 			const arrColumns: Array<OfficeExtension.ClientResult<Excel.ColumnProperties[]>> = [];
 			let range: Excel.Range;
 			range = worksheet.getUsedRange();
 			range.load(["address"]);
 			arrColumns.push(range.getColumnProperties({ columnHidden: true, columnIndex: true }))
 			return context.sync().then(() => {
+        //console.log('tables', worksheet.tables)
 				let visibleArr: any[] = [];
 				arrColumns.forEach(el => {
 					const visibleColumns: Excel.ColumnProperties[] = el.value.filter(column => column.columnHidden === false);

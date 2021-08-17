@@ -3,9 +3,15 @@
     Welcome to Merge!
   </h1>
   <app-column-list [list]="sheetArr"></app-column-list>
-  <app-column-list [list]="visibleColumnsArr"></app-column-list>
+  <!--<mat-form-field>
+    <mat-label>Columns:</mat-label>
+    <input matInput type="text" placeholder="A, C-T, W">
+  </mat-form-field>-->
+  <app-column-list [list]="visibleColumnsArrRightOrder"></app-column-list>
 
   <button mat-stroked-button color="primary" type="button" (click)="getCheckProperties()">Compare selected sheets
+  </button>
+  <button mat-stroked-button color="primary" type="button" (click)="fillWithSomething()">Fill
   </button>
 </div>
 

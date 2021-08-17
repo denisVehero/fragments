@@ -11,7 +11,7 @@ import context = Office.context;
 export class MergerComponent implements OnInit {
   sheetArr: { index: number, name: string, checked: boolean }[] = [];
   invisibleRowsArr: number[] = [];
-  visibleColumnsArr: { index: number, name: string, checked: boolean }[] = []
+  visibleColumnsArrRightOrder: { index: number, name: string, checked: boolean }[] = []
 
   constructor() {
   }
@@ -25,24 +25,37 @@ export class MergerComponent implements OnInit {
       this.sheetArr[0].checked = true;
     })
 
-    OfficeEngine.getVisibleColumns('Sheet1').then((arr) => {
-      this.visibleColumnsArr = arr.map((val) => {
+    OfficeEngine.getVisibleColumns('Sheet3').then((arr) => {
+      this.visibleColumnsArrRightOrder = arr.map((val) => {
         val.checked = false;
         return val;
       })
-      this.visibleColumnsArr[1].checked = true;
+      this.visibleColumnsArrRightOrder[0].checked = true;
+      //console.log('visible', this.visibleColumnsArrRightOrder)
     })
 
+
+    debugger;
+    /*console.log('AAA', OfficeEngine.fromNumToChar(703))
+    console.log('AAA', OfficeEngine.fromNumToChar(704))
+    console.log('AAA', OfficeEngine.fromNumToChar(705))*/
+    //OfficeEngine.copyValues([new Bound(0, 0, 400, 23128, 'Sheet1')], [new Bound(0, 0, 400, 23128, 'Sheet5')]).then()
+  }
+
+  fillWithSomething() {
+    OfficeEngine.fillWithSomething([new Bound(0, 0, 100, 2672, 'Sheet6')]).then()
   }
 
   getCheckProperties(): void {
     let checkedSheetsArr: any[] = [];
     let checkedColumnsArr: any[] = [];
-    this.visibleColumnsArr.forEach(column => {
+    this.visibleColumnsArrRightOrder.forEach(column => {
       if (column.checked) {
-        checkedColumnsArr.push(column.index);
+        checkedColumnsArr.push({index: column.index, value: column.name});
       }
     })
+    console.log('checked', checkedColumnsArr)
+
     this.sheetArr.map(sheet => {
       if (sheet.checked) {
         // @ts-ignore
@@ -64,6 +77,14 @@ export class MergerComponent implements OnInit {
       sheetName = name[0];//debugger;
 
       checkedSheetsArr.forEach(sheet => {
+        let visibleColumnsAnotherOrder: { index: number, name: string, checked: boolean }[] = [];
+        OfficeEngine.getVisibleColumns(sheet).then((arr) => {
+          visibleColumnsAnotherOrder = arr.map((val) => {
+            val.checked = false;
+            return val;
+          })
+        })
+        console.log('anotherOrder', visibleColumnsAnotherOrder)
 
         let arrOfBounds: Bound[] = [];
         let arrOfNewBounds: Bound[] = [];
@@ -71,23 +92,28 @@ export class MergerComponent implements OnInit {
           console.log('sheet', sheet)
           this.invisibleRowsArr = arr;
           arrOfBounds = this.splitByVisibleBounds(this.invisibleRowsArr, checkedColumnsArr, sheet);
-          console.log('rows+ columns', this.invisibleRowsArr, checkedColumnsArr);
+          console.log('rows + columns', this.invisibleRowsArr, checkedColumnsArr);
           arrOfBounds.forEach(bound => {
             debugger;
             if (bound.sheetName != nameCurSheet && nameCurSheet !== undefined) {
               debugger;
-              startRow += rowCount;debugger;
+              startRow += rowCount;
+              debugger;
               startCol = bound.col;
             } else {
               console.log('arrOfBounds[0]', arrOfBounds[0])
-              if (bound.col === 0 || arrOfBounds[0]) {debugger;
+              if (bound.col === 0 || arrOfBounds[0]) {
+                debugger;
                 startCol = 0;
-                startRow += rowCount;debugger;
+                startRow += rowCount;
+                debugger;
               } /*else if (startCol === 0 && ) {
 
-              } */else if (startCol === 0 || startCol + colCount < bound.col) {debugger;
+              } */ else if (startCol === 0 || startCol + colCount < bound.col) {
+                debugger;
                 startCol += colCount;
-                startRow = startRow;debugger;
+                startRow = startRow;
+                debugger;
               }
               /*if (bound.row === 0) {
                 startRow = 0;
