@@ -15,7 +15,6 @@ export class MergerComponent implements OnInit {
   headersRightOrder = {};
   columnString: string = '';
 
-
   constructor() {
   }
 
@@ -25,19 +24,18 @@ export class MergerComponent implements OnInit {
         val.checked = false;
         return val;
       });
-      this.sheetArr[4].checked = true;
+      this.sheetArr[0].checked = true;
     })
 
-    OfficeEngine.getVisibleColumns('Sheet3').then((arr) => {
+    OfficeEngine.getVisibleColumns('Sheet1').then((arr) => {
       this.visibleColumnsArr = arr.map((val) => {
         val.checked = false;
         return val;
       })
-      this.visibleColumnsArr[0].checked = true;
       //console.log('visible', this.visibleColumnsArrRightOrder)
     })
 
-    OfficeEngine.getHeaders('Sheet3').then(arr => {
+    OfficeEngine.getHeaders('Sheet1').then(arr => {
       this.headersRightOrder = arr;
     })
 
@@ -45,28 +43,21 @@ export class MergerComponent implements OnInit {
     /*console.log('AAA', OfficeEngine.fromNumToChar(703))
     console.log('AAA', OfficeEngine.fromNumToChar(704))
     console.log('AAA', OfficeEngine.fromNumToChar(705))*/
-    //OfficeEngine.copyValues([new Bound(0, 0, 400, 23128, 'Sheet1')], [new Bound(0, 0, 400, 23128, 'Sheet5')]).then()
   }
 
   fillWithSomething() {
-    OfficeEngine.fillWithSomething([new Bound(0, 0, 100, 2672, 'Sheet6')]).then()
+    OfficeEngine.fillWithSomething([new Bound(0, 0, 50, 3000, 'Sheet3')]).then()
   }
 
   getCheckProperties(): void {
-    console.log('columnString', this.columnString)
-    let str = this.columnString.split(',');
-    console.log('str', str)
-    //let regexp = /[A-Z]+.?-.?[A-Z]+/gm;
-    str.forEach(letter => {
-      letter.split('-');
-    })
+
     let checkedSheetsArr: any[] = [];
-    let checkedColumnsArr: any[] = [];
-    this.visibleColumnsArr.forEach(column => {
+    let checkedColumnsArr = OfficeEngine.getChooseColumns(this.columnString);
+    /*this.visibleColumnsArr.forEach(column => {
       if (column.checked) {
-        checkedColumnsArr.push({index: column.index, value: column.name});
+        checkedColumnsArr.push({index: column.index});
       }
-    })
+    })*/
     this.sheetArr.map(sheet => {
       if (sheet.checked) {
         // @ts-ignore
@@ -91,14 +82,12 @@ export class MergerComponent implements OnInit {
         //let headers = [];
 
         let arrHeadersNew: any[] = [];
-        OfficeEngine.getHeaders('Sheet4').then(arr => {
+        OfficeEngine.getHeaders('Sheet2').then(arr => {
           Object.entries(this.headersRightOrder).forEach((elHeader) => {
             Object.entries(arr).map((elValue) => {
-
               if (elHeader[1] === elValue[1]) {
-               /* console.log('elValue', elValue);
-                console.log('elHeader', elHeader)*/
-
+                /* console.log('elValue', elValue);
+                 console.log('elHeader', elHeader)*/
                 let value = elValue;
                 // @ts-ignore
                 //arrHeadersNew.push({index: arr[elHeader[0]], value: this.headersRightOrder[elValue[1]]})
@@ -136,7 +125,7 @@ export class MergerComponent implements OnInit {
               startCol = bound.col;
             } else {
               console.log('arrOfBounds[0]', arrOfBounds[0])
-              if (bound.col === 0 || arrOfBounds[0]) {
+              if (bound.col === 0) {
                 debugger;
                 startCol = 0;
                 startRow += rowCount;

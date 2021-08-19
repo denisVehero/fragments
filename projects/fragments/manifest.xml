@@ -7,10 +7,10 @@
   <DefaultLocale>en-US</DefaultLocale>
 
   <DisplayName DefaultValue="Fragmentation add-in" />
-  <Description DefaultValue="" />
+  <Description DefaultValue="Fragmentation add-in" />
   <IconUrl DefaultValue="https://localhost:4200/assets/Logo.png" />
   <HighResolutionIconUrl DefaultValue="https://localhost:4200/assets/Logo.png" />
-  <SupportUrl DefaultValue="[Insert the URL of a page that provides support information for the app]" />
+  <SupportUrl DefaultValue="https://localhost:4200" />
   <AppDomains>
       <AppDomain>https://localhost:4200</AppDomain>
   </AppDomains>
@@ -28,7 +28,7 @@
 
       <Host xsi:type="Workbook">
         <DesktopFormFactor>
-          
+
           <ExtensionPoint xsi:type="PrimaryCommandSurface">
             <CustomTab id="Addin.Tab1">
               <Group id="Addin.Tab1.Group1">
@@ -72,8 +72,8 @@
                 </Control>
               </Group>
 
-              
-              
+
+
               <Label resid="Addin.Tab1.TabLabel" />
               <InsertBefore>TabHome</InsertBefore>
             </CustomTab>

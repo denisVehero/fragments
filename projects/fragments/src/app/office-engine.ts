@@ -254,6 +254,44 @@ export class OfficeEngine {
     })
   }
 
+  static getChooseColumns(input: string): number[] {
+    console.log('columnString', input)
+    let str = input.split(',');
+    console.log('str', str)
+    let letterColumnsArr: any[] = [];
+    str.forEach((letter: string) => {
+      letterColumnsArr.push((letter.trim().split('-')))
+    })
+    console.log('lettersColumnArr', letterColumnsArr)
+    let indexColumnsArr: number[] = [];
+    letterColumnsArr.forEach((column) => {
+      if (column.length > 1) {
+        for (let i = 0; i <= this.fromCharToNum(column[1]); i++) {
+          indexColumnsArr.push(this.fromCharToNum(column[0]) + i);
+        }
+      } else {
+        indexColumnsArr.push(this.fromCharToNum(column[0]));
+      }
+    })
+    console.log('indexesArr', indexColumnsArr)
+    return indexColumnsArr;
+  }
+
+  static fromCharToNum(letters: string): number {
+    console.log('letters', letters)
+    let index: number = 0;
+    if (letters.length >= 1) {
+      index += letters.charCodeAt(letters.length - 1) - 65;
+    }
+    if (letters.length >= 2) {
+      index += (letters.charCodeAt(letters.length - 2) - 65 + 1) * 26;
+    }
+    if (letters.length === 3) {
+      index += (letters.charCodeAt(letters.length - 3) - 65 + 1) * 26 * 26;
+    }
+    return index;
+  }
+
   static fromNumToChar(num: number): string {
     let letterAddress;
     let secondLetter, firstLetter: string;
