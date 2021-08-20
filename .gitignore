@@ -43,3 +43,9 @@ testem.log
 # System Files
 .DS_Store
 Thumbs.db
+
+
+./projects/test.json
+./projects/test1.json
+./projects/test2.json
+./projects/test3.json
