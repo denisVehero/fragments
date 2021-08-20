@@ -291,6 +291,28 @@ export class OfficeEngine {
     return index;
   }
 
+  static getTable() {
+    return Excel.run(context => {
+      const tables = context.workbook.worksheets.getItem('Sheet6').tables;
+      tables.load(['items'])
+      return context.sync().then(() => {
+        tables.items.forEach(item => {
+          item.load(['autoFilter', 'columns', 'highlightFirstColumn', 'highlightLastColumn', 'id', 'name', 'rows', 'showBandedColumns', 'showBandedRows', 'showFilterButton', 'showHeaders', 'showTotals', 'sort', 'tableStyle', 'worksheet'])
+          console.log('item', item)
+          return context.sync().then(() => {
+            /*item.highlightFirstColumn = true;
+            item.highlightLastColumn = true;
+            item.showFilterButton = false;
+            item.showBandedColumns = true;
+            item.showBandedRows = true;
+            item.showTotals = true;*/
+          })
+        })
+
+      })
+    })
+  }
+
   static fromNumToChar(num: number): string {
     let letterAddress;
     let secondLetter, firstLetter: string;

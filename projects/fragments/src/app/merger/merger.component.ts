@@ -13,7 +13,7 @@ export class MergerComponent implements OnInit {
   invisibleRowsArr: number[] = [];
   visibleColumnsArr: { index: number, name: string, checked: boolean }[] = []
   headersRightOrder = {};
-  columnString: {value: string} = {value: 'A, B'};
+  columnString: { value: string } = {value: 'A-AX'};
 
   constructor() {
   }
@@ -49,8 +49,12 @@ export class MergerComponent implements OnInit {
     OfficeEngine.fillWithSomething([new Bound(0, 0, 50, 3000, 'Sheet3')]).then()
   }
 
-  getCheckProperties(): void {
+  getTable() {
+    OfficeEngine.getTable().then()
+  }
 
+  getCheckProperties(): void {
+    let t = performance.now();
     let checkedSheetsArr: any[] = [];
     let checkedColumnsArr = OfficeEngine.getChooseColumns(this.columnString);
     /*this.visibleColumnsArr.forEach(column => {
@@ -66,7 +70,6 @@ export class MergerComponent implements OnInit {
     })
 
     OfficeEngine.createWorksheet().then((name) => {
-      debugger;
       console.log('name', name)
       let sheetName: string = '';
 
@@ -77,17 +80,18 @@ export class MergerComponent implements OnInit {
       let boundName: string;
       let nameCurSheet: string;
       sheetName = name[0];//debugger;
-
+      let arrPromises: any[] = [];
       checkedSheetsArr.forEach(sheet => {
+
         //let headers = [];
 
         let arrHeadersNew: any[] = [];
-        OfficeEngine.getHeaders('Sheet2').then(arr => {
+        /*OfficeEngine.getHeaders('Sheet2').then(arr => {
           Object.entries(this.headersRightOrder).forEach((elHeader) => {
             Object.entries(arr).map((elValue) => {
               if (elHeader[1] === elValue[1]) {
-                /* console.log('elValue', elValue);
-                 console.log('elHeader', elHeader)*/
+                /!* console.log('elValue', elValue);
+                 console.log('elHeader', elHeader)*!/
                 let value = elValue;
                 // @ts-ignore
                 //arrHeadersNew.push({index: arr[elHeader[0]], value: this.headersRightOrder[elValue[1]]})
@@ -107,11 +111,11 @@ export class MergerComponent implements OnInit {
 
           })
           console.log('arr', arrHeadersNew)
-        })
+        })*/
 
         let arrOfBounds: Bound[] = [];
         let arrOfNewBounds: Bound[] = [];
-        OfficeEngine.getInvisibleRows(sheet).then((arr) => {
+        arrPromises.push(OfficeEngine.getInvisibleRows(sheet).then((arr): Promise<any> => {
           console.log('sheet', sheet)
           this.invisibleRowsArr = arr;
           arrOfBounds = this.splitByVisibleBounds(this.invisibleRowsArr, checkedColumnsArr, sheet);
@@ -160,9 +164,12 @@ export class MergerComponent implements OnInit {
 
           })
           console.log('arrOfNewBounds', arrOfNewBounds)
-          OfficeEngine.copyValues(arrOfBounds, arrOfNewBounds).then()
-        })
+          return OfficeEngine.copyValues(arrOfBounds, arrOfNewBounds).then()
+        }))
 
+      })
+      Promise.all(arrPromises).then(() => {
+        console.log('performance', performance.now() - t);
       })
     })
   }
