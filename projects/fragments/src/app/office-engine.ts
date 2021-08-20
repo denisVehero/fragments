@@ -1,4 +1,5 @@
-import { range } from "rxjs";
+
+import { ReturnStatement } from "@angular/compiler";
 import { ProgressStatus } from "./progress-statuses";
 
 export class OfficeEngine {
@@ -12,7 +13,7 @@ export class OfficeEngine {
 			return ctx.sync();
 		})
 	}
-	static getCurrentSheet():Promise<String> {
+	static getCurrentSheet(): Promise<String> {
 		return Excel.run((ctx) => {
 			let worksheet = ctx.workbook.worksheets.getActiveWorksheet();
 			worksheet.load(["name"])
@@ -52,10 +53,9 @@ export class OfficeEngine {
 				}
 			} else {
 				task.push(new TruckBounds(sourceInd[i], toInd[i]))
-				
+
 			}
 		}
-		console.log(task);
 		return Excel.run(async (ctx) => {
 			let r1: Excel.Range, r2: Excel.Range;
 			let counter = 0;
@@ -93,12 +93,13 @@ export class OfficeEngine {
 				let r1 = rangeAdr.pop();
 				l++;
 				if (!r1) break;
-				i+= r1.colCount * r1.rowCount;
-				let w = ctx.workbook.worksheets.getItem(r1.sheetName);
+				i += r1.colCount * r1.rowCount;
+				console.log(r1);
 				let r = this.getRange(ctx.workbook, r1);
 				let color = "#" + ("00000" + Math.floor(Math.random() * 16581375).toString(16)).slice(-6);
 				r.format.fill.color = color;
-				r.values = new Array(r1.rowCount).fill(new Array(r1.colCount).fill(l+ "000000"));
+				if (Math.random() <= 0.75) r.values = new Array(r1.rowCount).fill(new Array(r1.colCount).fill((Math.random() + 1).toString(36).slice(-10)))
+					else r.values = new Array(r1.rowCount).fill(new Array(r1.colCount).fill(""));
 				if (i > 4000) {
 					await ctx.sync();
 					console.log(rangeAdr.length)
@@ -109,16 +110,16 @@ export class OfficeEngine {
 			console.log("filled")
 		});
 	}
-	static createWorksheet(workSheetName?: Set<string>):Promise<string[]> {
+	static createWorksheet(workSheetName?: Set<string>): Promise<string[]> {
 		let ans: string[] = [];
 		return Excel.run(async (ctx) => {
 			let t: any[] = [];
 			if (workSheetName) {
 				workSheetName.forEach(val => {
-					t.push({w: ctx.workbook.worksheets.getItemOrNullObject(String(val)), name: val});
+					t.push({ w: ctx.workbook.worksheets.getItemOrNullObject(String(val)), name: val });
 				})
 				await ctx.sync();
-				for(let i = 0; i < t.length; i ++) {
+				for (let i = 0; i < t.length; i++) {
 					if (t[i].w.isNullObject) {
 						ctx.workbook.worksheets.add(t[i].name);
 						ans.push(t[i].name);
@@ -132,36 +133,39 @@ export class OfficeEngine {
 			return ctx.sync(ans)
 		})
 	}
-	static getRangesValues(ranges: Bound[], progress?: ProgressStatus): Promise<any[][]> {
-		let task: Bound[] = [];
-		for (let i = 0; i < ranges.length; i++) {
-			if (ranges[i].colCount * ranges[i].rowCount > this.maxCells) {
-				let tmp = Bound.splitBound(ranges[i], 2500, 2500);
-				for (let j = 0; j < tmp.length; j++) {
-					task.push(tmp[j]);
-				}
-			} else {
-				task.push(ranges[i])
-			}
-		}
+	static getRangesValues(ranges: Bound[], progress?: ProgressStatus): Promise<any[][][]> {
 		return Excel.run(async (ctx) => {
-			let r1: Excel.Range;
-			let counter = 0;
-			let res: any[] = [];
-			for (let i = 0; i < task.length; i++) {
-				r1 = this.getRange(ctx.workbook, task[i]);
-				counter += task[i].colCount * task[i].rowCount;
-				res.push(r1.load("values"));
-				if (progress) progress.complited++;
-				if (counter > this.maxCells) {
-					await ctx.sync();
-					counter = 0;
-					console.log(res.length)
+			let bound = ranges.shift();
+			let ans:any[][][] = [];
+			let i = 0;
+			while (bound) {
+				let task;
+				if ( bound.colCount * bound.rowCount > 5000) task = Bound.splitBound(bound, 5000, 5000)
+					else task = [bound]
+				let r1: Excel.Range;
+				let counter = 0;
+				let res: Excel.Range[] = [];
+				for (let i = 0; i < task.length; i++) {
+					r1 = this.getRange(ctx.workbook, task[i]);
+					counter += task[i].colCount * task[i].rowCount;
+					res.push(r1.load(["values", "columnIndex"]));
+					
+					if (counter > this.maxCells) {
+						await ctx.sync();
+						counter = 0;
+					}
 				}
+				await ctx.sync();
+				let tmp:any[][] = [];
+				res.forEach((el) => {
+					tmp = [...el.values, ...tmp];
+				});
+				ans.push(tmp);
+				if (progress) progress.complited++;
+				i++;
+				bound = ranges.shift();
 			}
-			return ctx.sync().then(() => {
-				return res.map(r => r.values);
-			})
+			return Promise.resolve(ans);
 		})
 	}
 
@@ -191,26 +195,40 @@ export class OfficeEngine {
 
 	static getInvisibleRows(sheet: string): Promise<any[]> {
 		return Excel.run(context => {
-		  const worksheet = context.workbook.worksheets.getItem(sheet);
-		  worksheet.load(["items"]);
-		  const arrRows: Array<OfficeExtension.ClientResult<Excel.RowProperties[]>> = [];
-		  let range: Excel.Range;
-		  range = worksheet.getUsedRange();
-		  range.load("rowCount")
-		  arrRows.push(range.getRowProperties({rowHidden: true, rowIndex: true}))
-		  return context.sync().then(() => {
-			let visibleArr: any[] = [];
-			arrRows.forEach(el => {
-			  const visibleRows: Excel.RowProperties[] = el.value.filter(row => row.rowHidden === true);
-			  visibleRows.forEach(row => {
-				visibleArr.push(row.rowIndex);
-			  })
+			
+			const worksheet = context.workbook.worksheets.getItem(sheet);
+			const arrRows: Array<OfficeExtension.ClientResult<Excel.RowProperties[]>> = [];
+			let range: Excel.Range;
+			range = worksheet.getUsedRange();
+			range.load("rowCount")
+			let maxRowCount = 1000000;
+			return context.sync().then(async () => {
+				let visibleArr: any[] = [];
+				let ranges = [];
+				for (let i = 0; i < range.rowCount; i+= maxRowCount) {
+					if (i + maxRowCount > range.rowCount) maxRowCount = range.rowCount - i;
+					ranges.push(
+						range.getRow(i).getBoundingRect(
+							range.getRow(i + maxRowCount - 1)
+					));
+					
+				}
+				let r = ranges.pop();
+				while(r) {
+					let rowProperties = r.getRowProperties({ rowHidden: true, rowIndex: true })
+					await context.sync();
+					const visibleRows: Excel.RowProperties[] = rowProperties.value.filter(row => row.rowHidden === true);
+					visibleRows.forEach(row => {
+						visibleArr.push(row.rowIndex);
+					})
+					
+					r = ranges.pop();
+				}
+				visibleArr.push(range.rowCount)
+				return visibleArr;
 			})
-			visibleArr.push(range.rowCount)
-			return visibleArr;
-		  })
 		})
-	  }
+	}
 
 	static getVisibleSheets(): Promise<Array<string>> {
 		return Excel.run(context => {
@@ -233,7 +251,7 @@ export class OfficeEngine {
 		})
 	}
 
-	static fromNumToChar(num: number):string {
+	static fromNumToChar(num: number): string {
 		let letterAddress;
 		let secondLetter, firstLetter: string;
 		if (num > 26) {
@@ -298,7 +316,7 @@ export class Bound {
 				cur = dividers[i]
 			}
 		}
-		for (let i = b.row; i < b.row + b.rowCount ; i += cur.rows) {
+		for (let i = b.row; i < b.row + b.rowCount; i += cur.rows) {
 			for (let j = b.col; j < b.col + b.colCount; j += cur.cols) {
 				result.push(new Bound(j, i, Math.min(b.col + b.colCount - j, cur.cols), Math.min(b.row + b.rowCount - i, cur.rows), b.sheetName));
 			}
