@@ -13,7 +13,7 @@ export class MergerComponent implements OnInit {
   invisibleRowsArr: number[] = [];
   visibleColumnsArr: { index: number, name: string, checked: boolean }[] = []
   headersRightOrder = {};
-  columnString: string = '';
+  columnString: {value: string} = {value: 'A, B'};
 
   constructor() {
   }

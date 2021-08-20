@@ -19,6 +19,7 @@ import {MatCheckboxModule} from '@angular/material/checkbox';
 import { FormsModule } from '@angular/forms';
 import {MatRadioModule} from '@angular/material/radio';
 import {MatSnackBarModule} from '@angular/material/snack-bar';
+import { InputForColumnsComponent } from './input-for-columns/input-for-columns.component';
 
 @NgModule({
   declarations: [
@@ -26,7 +27,8 @@ import {MatSnackBarModule} from '@angular/material/snack-bar';
     DecomposerComponent,
     MergerComponent,
     ColumnListComponent,
-    ProgressBarComponent
+    ProgressBarComponent,
+    InputForColumnsComponent
   ],
   imports: [
     BrowserModule,

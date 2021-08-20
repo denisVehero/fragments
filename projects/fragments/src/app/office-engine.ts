@@ -254,9 +254,9 @@ export class OfficeEngine {
     })
   }
 
-  static getChooseColumns(input: string): number[] {
-    console.log('columnString', input)
-    let str = input.split(',');
+  static getChooseColumns(input: { value: string }): number[] {
+    console.log('columnString', input);
+    let str = Object.values(input)[0].split(',');
     console.log('str', str)
     let letterColumnsArr: any[] = [];
     str.forEach((letter: string) => {
@@ -266,7 +266,7 @@ export class OfficeEngine {
     let indexColumnsArr: number[] = [];
     letterColumnsArr.forEach((column) => {
       if (column.length > 1) {
-        for (let i = 0; i <= this.fromCharToNum(column[1]); i++) {
+        for (let i = 0; i <= this.fromCharToNum(column[1]) - this.fromCharToNum(column[0]); i++) {
           indexColumnsArr.push(this.fromCharToNum(column[0]) + i);
         }
       } else {
@@ -278,7 +278,6 @@ export class OfficeEngine {
   }
 
   static fromCharToNum(letters: string): number {
-    console.log('letters', letters)
     let index: number = 0;
     if (letters.length >= 1) {
       index += letters.charCodeAt(letters.length - 1) - 65;
