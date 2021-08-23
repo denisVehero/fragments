@@ -20,8 +20,10 @@
     "@angular/platform-browser": "~12.1.2",
     "@angular/platform-browser-dynamic": "~12.1.2",
     "@angular/router": "~12.1.2",
+    "@types/xlsx": "0.0.36",
     "linked-list-typescript": "^1.0.15",
     "rxjs": "~6.6.0",
+    "ts-xlsx": "0.0.11",
     "tslib": "^2.2.0",
     "zone.js": "~0.11.4"
   },
