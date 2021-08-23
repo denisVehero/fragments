@@ -293,38 +293,59 @@ export class OfficeEngine {
 
   static getTable() {
     return Excel.run(context => {
-      const tables = context.workbook.worksheets.getItem('Sheet6').tables;
+      const sheet = context.workbook.worksheets.getItem('Sheet6');
+      const tables = sheet.tables;
       tables.load(['items'])
+      console.log('tables', tables)
+      tables.add('Sheet6!H1:N7', true);
+      sheet.getUsedRange().format.autofitColumns();
+      sheet.getUsedRange().format.autofitRows();
       return context.sync().then(() => {
+        let tableArray: Excel.Table[] = [];
         tables.items.forEach(item => {
           item.load(['autoFilter', 'columns', 'highlightFirstColumn', 'highlightLastColumn', 'id', 'name', 'rows', 'showBandedColumns', 'showBandedRows', 'showFilterButton', 'showHeaders', 'showTotals', 'sort', 'tableStyle', 'worksheet'])
           console.log('item', item)
-          return context.sync().then(() => {
-            /*item.highlightFirstColumn = true;
-            item.highlightLastColumn = true;
-            item.showFilterButton = false;
-            item.showBandedColumns = true;
-            item.showBandedRows = true;
-            item.showTotals = true;*/
+          tableArray.push(item);
+        })
+        return context.sync().then(() => {
+          tableArray.forEach(item => {
+            console.log('item.name', item.name)
+            let table = tables.getItem(item.name);
+            table.highlightFirstColumn = true;
+            table.highlightLastColumn = true;
+            table.showFilterButton = true;
+            table.showBandedColumns = true;
+            table.showBandedRows = true;
+            table.showTotals = true;
           })
         })
-
       })
     })
   }
 
   static fromNumToChar(num: number): string {
-    let letterAddress;
-    let secondLetter, firstLetter: string;
+    let letterAddress = '';
     if (num > 26) {
-      if (num % 26) {
-        firstLetter = String.fromCharCode(64 + (num - (num % 26)) / 26);
-        secondLetter = String.fromCharCode(64 + (num % 26));
+      if (num / 26 >= 26) {
+        let firstLetterIndex = (num - (num % 676)) / 676;
+        //if (num % 26) {
+        letterAddress += String.fromCharCode(firstLetterIndex + 64);
+        letterAddress += String.fromCharCode((num - 676 * firstLetterIndex - (num - 676 * firstLetterIndex) % 26) / 26 + 64);
+        letterAddress += String.fromCharCode((num - 676 * firstLetterIndex) % 26 + 64 + 1);
+        /*} else {
+          letterAddress += String.fromCharCode(firstLetterIndex + 64);
+          letterAddress += String.fromCharCode((num - 676 * firstLetterIndex - (num - 676 * firstLetterIndex) % 26) / 26 + 64);
+          letterAddress += String.fromCharCode((num - 676 * firstLetterIndex) % 26 + 1 + 64);
+        }*/
       } else {
-        firstLetter = String.fromCharCode(64 + (num - (num % 26)) / 26 - 1);
-        secondLetter = String.fromCharCode(64 + (num % 26) + 26);
+        if (num % 26) {
+          letterAddress += String.fromCharCode(64 + (num - (num % 26)) / 26);
+          letterAddress += String.fromCharCode(64 + (num % 26));
+        } else {
+          letterAddress += String.fromCharCode(64 + (num - (num % 26)) / 26 - 1);
+          letterAddress += String.fromCharCode(64 + (num % 26) + 26);
+        }
       }
-      letterAddress = firstLetter + secondLetter;
     } else {
       letterAddress = String.fromCharCode(64 + num);
     }

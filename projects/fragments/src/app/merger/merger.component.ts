@@ -39,10 +39,9 @@ export class MergerComponent implements OnInit {
       this.headersRightOrder = arr;
     })
 
-    debugger;
-    /*console.log('AAA', OfficeEngine.fromNumToChar(703))
-    console.log('AAA', OfficeEngine.fromNumToChar(704))
-    console.log('AAA', OfficeEngine.fromNumToChar(705))*/
+    console.log('AAA', OfficeEngine.fromNumToChar(1404))
+    console.log('AAA', OfficeEngine.fromNumToChar(728))
+    console.log('AAA', OfficeEngine.fromNumToChar(1429))
   }
 
   fillWithSomething() {
