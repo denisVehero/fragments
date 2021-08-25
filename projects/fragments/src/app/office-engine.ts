@@ -201,7 +201,7 @@ export class OfficeEngine {
           const visibleColumns: Excel.ColumnProperties[] = el.value.filter(column => column.columnHidden === false);
           visibleColumns.forEach(column => {
             if (column.columnIndex != undefined) {
-              visibleArr.push({index: column.columnIndex, value: this.fromNumToChar(column.columnIndex + 1)});
+              visibleArr.push({index: column.columnIndex});
             }
           })
         })
@@ -293,23 +293,21 @@ export class OfficeEngine {
 
   static getTable() {
     return Excel.run(context => {
-      const sheet = context.workbook.worksheets.getItem('Sheet6');
+      const sheet = context.workbook.worksheets.getItem('Sheet1');
       const tables = sheet.tables;
       tables.load(['items'])
       console.log('tables', tables)
-      tables.add('Sheet6!H1:N7', true);
-      sheet.getUsedRange().format.autofitColumns();
-      sheet.getUsedRange().format.autofitRows();
       return context.sync().then(() => {
         let tableArray: Excel.Table[] = [];
-        tables.items.forEach(item => {
-          item.load(['autoFilter', 'columns', 'highlightFirstColumn', 'highlightLastColumn', 'id', 'name', 'rows', 'showBandedColumns', 'showBandedRows', 'showFilterButton', 'showHeaders', 'showTotals', 'sort', 'tableStyle', 'worksheet'])
-          console.log('item', item)
-          tableArray.push(item);
+        tables.items.forEach((el) => {
+          el.load(['name', 'style'])
+          // @ts-ignore
+          tableArray.push(el)
         })
         return context.sync().then(() => {
           tableArray.forEach(item => {
             console.log('item.name', item.name)
+            console.log('table.style', item.style)
             let table = tables.getItem(item.name);
             table.highlightFirstColumn = true;
             table.highlightLastColumn = true;
@@ -317,39 +315,11 @@ export class OfficeEngine {
             table.showBandedColumns = true;
             table.showBandedRows = true;
             table.showTotals = true;
+
           })
         })
       })
     })
-  }
-
-  static fromNumToChar(num: number): string {
-    let letterAddress = '';
-    if (num > 26) {
-      if (num / 26 >= 26) {
-        let firstLetterIndex = (num - (num % 676)) / 676;
-        //if (num % 26) {
-        letterAddress += String.fromCharCode(firstLetterIndex + 64);
-        letterAddress += String.fromCharCode((num - 676 * firstLetterIndex - (num - 676 * firstLetterIndex) % 26) / 26 + 64);
-        letterAddress += String.fromCharCode((num - 676 * firstLetterIndex) % 26 + 64 + 1);
-        /*} else {
-          letterAddress += String.fromCharCode(firstLetterIndex + 64);
-          letterAddress += String.fromCharCode((num - 676 * firstLetterIndex - (num - 676 * firstLetterIndex) % 26) / 26 + 64);
-          letterAddress += String.fromCharCode((num - 676 * firstLetterIndex) % 26 + 1 + 64);
-        }*/
-      } else {
-        if (num % 26) {
-          letterAddress += String.fromCharCode(64 + (num - (num % 26)) / 26);
-          letterAddress += String.fromCharCode(64 + (num % 26));
-        } else {
-          letterAddress += String.fromCharCode(64 + (num - (num % 26)) / 26 - 1);
-          letterAddress += String.fromCharCode(64 + (num % 26) + 26);
-        }
-      }
-    } else {
-      letterAddress = String.fromCharCode(64 + num);
-    }
-    return letterAddress;
   }
 }
 

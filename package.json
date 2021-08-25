@@ -20,10 +20,15 @@
     "@angular/platform-browser": "~12.1.2",
     "@angular/platform-browser-dynamic": "~12.1.2",
     "@angular/router": "~12.1.2",
+    "@types/xml2js": "^0.4.9",
     "linked-list-typescript": "^1.0.15",
     "rxjs": "~6.6.0",
+    "sax": "^1.2.4",
+    "stream": "0.0.2",
+    "timers": "^0.1.1",
     "ts-xlsx": "^0.0.11",
     "tslib": "^2.2.0",
+    "xml2js": "^0.4.23",
     "zone.js": "~0.11.4"
   },
   "devDependencies": {

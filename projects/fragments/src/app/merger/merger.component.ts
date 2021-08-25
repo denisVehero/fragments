@@ -2,6 +2,7 @@ import {Component, OnInit} from '@angular/core';
 import {Bound, OfficeEngine} from '../office-engine'
 import context = Office.context;
 import * as XSLS from 'ts-xlsx';
+import * as xmlToJs from 'xml2js'
 
 @Component({
   selector: 'app-merger',
@@ -28,23 +29,6 @@ export class MergerComponent implements OnInit {
       this.sheetArr[0].checked = true;
     })
 
-    /*Office.context.document.getFileAsync(Office.FileType.Compressed, { sliceSize: 65536 }, (result) => {
-      //console.log('result', result);
-      if (result.status === Office.AsyncResultStatus.Succeeded) {
-        result.value.getSliceAsync(0, (result) => {
-          console.log("result.slice", result);
-          let workbook = XSLS.read(result.value.data, {
-            bookFiles: true,
-            cellStyles: true,
-            type: "array"
-          });
-          console.log('workbook', workbook)
-        });
-      } else {
-      }
-      // result.value will return a valid File Object.
-    });*/
-
     OfficeEngine.getVisibleColumns('Sheet1').then((arr) => {
       this.visibleColumnsArr = arr.map((val) => {
         val.checked = false;
@@ -60,33 +44,49 @@ export class MergerComponent implements OnInit {
 
   async fillWithSomething() {
     //OfficeEngine.fillWithSomething([new Bound(0, 0, 50, 3000, 'Sheet3')]).then()
-    function elementToObject(element: any, o?: any) {
-      let el = element;
-       o = {
-        tagName: el.tagName
+    await Excel.run(async (context) => {
+      let formatsArr: any[] = [];
+      const range = context.workbook.worksheets.getActiveWorksheet().getUsedRange();
+      console.log('conditionalFormats', range.conditionalFormats)
+      let formats = range.conditionalFormats
+      formats.load('items')
+      range.conditionalFormats.clearAll();
+      await context.sync()
+      const conditionalFormat = range.conditionalFormats.add(Excel.ConditionalFormatType.colorScale);
+      const criteria = {
+        minimum: {formula: null, type: Excel.ConditionalFormatColorCriterionType.lowestValue, color: "blue"},
+        midpoint: {formula: "50", type: Excel.ConditionalFormatColorCriterionType.percent, color: "yellow"},
+        maximum: {formula: null, type: Excel.ConditionalFormatColorCriterionType.highestValue, color: "red"}
       };
-      let i = 0;
-      for (i ; i < el.attributes.length; i++) {
-        o[el.attributes[i].name] = el.attributes[i].value;
-      }
+      //@ts-ignore
+      conditionalFormat.colorScale.criteria = criteria;
+      console.log('conditionalFormat', conditionalFormat)
+      await context.sync();
 
-      let children = el.childElements();
-      if (children.length) {
-        o.children = [];
-        i = 0;
-        for (i ; i < children.length; i++) {
-          //let child = children[i];
-          o.children[i] = elementToObject(children[i], o.children) ;
-        }
-      }
-      return o;
-    }
-    /*
-      exemple:
-      a = elementToObject(document.body);
-      Object.toJSON(a);
-    */
+      formats.items.forEach((el: Excel.ConditionalFormat) => {
+        el.load('colorScale')
+        formatsArr.push(el)
+      })
+      /*(Excel.ConditionalFormatType.custom);
+
+      //conditionalFormat.load(['preset', 'custom'])
+      //conditionalFormat.custom.format.font.color = "yellow";
+      conditionalFormat.custom.rule.formula = '=IF(C13>INDIRECT("RC[-1]",0),TRUE)';
+      conditionalFormat.custom.format.font.color = "yellow";
+      await context.sync();
+      console.log('items', range.conditionalFormats.items)
+
+      })*/
+
+
+      /*console.log('formatsArr', formatsArr)
+      console.log('custom', conditionalFormat.custom)*/
+      //console.log('format', conditionalFormat)
+      //console.log('range', range)
+    });
+
     await Office.context.document.getFileAsync(Office.FileType.Compressed, {sliceSize: 65536}, (result) => {
+      let t0 = performance.now();
       //console.log('result', result);
       if (result.status === Office.AsyncResultStatus.Succeeded) {
         result.value.getSliceAsync(0, (result) => {
@@ -100,12 +100,10 @@ export class MergerComponent implements OnInit {
           // @ts-ignore
           let styles = String.fromCharCode.apply(null, workbook.files["xl/styles.xml"]._data);
           console.log('styles', styles);
-          let domParser = new DOMParser();
-          let xml = domParser.parseFromString(styles, 'text/xml');
-          let myStyle = xml.getElementsByName("My table style1")[0];
-          //let domEl = JSON.stringify(myStyle)
-          let domEl = elementToObject(myStyle);
-          console.log('domEl', domEl);
+          xmlToJs.parseString(styles, (err, res) => {
+            console.log('res', res)
+          })
+
 
         });
       }
@@ -144,7 +142,7 @@ export class MergerComponent implements OnInit {
       let colCount: number = 0;
       let boundName: string;
       let nameCurSheet: string;
-      sheetName = name[0];//debugger;
+      sheetName = name[0];
       let arrPromises: any[] = [];
       checkedSheetsArr.forEach(sheet => {
 
