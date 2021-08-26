@@ -3,6 +3,7 @@ import {Bound, OfficeEngine} from '../office-engine'
 import context = Office.context;
 import * as XSLS from 'ts-xlsx';
 import * as xmlToJs from 'xml2js'
+import loader from "@angular-devkit/build-angular/src/webpack/plugins/single-test-transform";
 
 @Component({
   selector: 'app-merger',
@@ -52,21 +53,45 @@ export class MergerComponent implements OnInit {
       formats.load('items')
       range.conditionalFormats.clearAll();
       await context.sync()
-      const conditionalFormat = range.conditionalFormats.add(Excel.ConditionalFormatType.colorScale);
-      const criteria = {
-        minimum: {formula: null, type: Excel.ConditionalFormatColorCriterionType.lowestValue, color: "blue"},
-        midpoint: {formula: "50", type: Excel.ConditionalFormatColorCriterionType.percent, color: "yellow"},
-        maximum: {formula: null, type: Excel.ConditionalFormatColorCriterionType.highestValue, color: "red"}
-      };
+      const conditionalFormat = range.conditionalFormats.add(Excel.ConditionalFormatType.custom);
       //@ts-ignore
-      conditionalFormat.colorScale.criteria = criteria;
-      console.log('conditionalFormat', conditionalFormat)
-      await context.sync();
+      conditionalFormat.custom.format.set({
+        fill: {
+          color: "orange"
+        },
+        font: {
+          color: "blue",
+          bold: true,
+          underline: "Single",
+        },
+        numberFormat: true,
+        borders: {
+          bottom: {
+            color: "black",
+            style: "Continuous"
+          },
+          top: {
+            color: "black",
+            style: "Continuous"
+          },
+          right: {
+            color: "blue",
+            style: "Continuous"
+          },
+          left: {
+            color: "blue",
+            style: "Continuous"
+          },
+        }
+      })
+      //conditionalFormat.colorScale.criteria = criteria;
 
-      formats.items.forEach((el: Excel.ConditionalFormat) => {
+      await context.sync();
+      console.log('conditionalFormat', conditionalFormat)
+      /*formats.items.forEach((el: Excel.ConditionalFormat) => {
         el.load('colorScale')
         formatsArr.push(el)
-      })
+      })*/
       /*(Excel.ConditionalFormatType.custom);
 
       //conditionalFormat.load(['preset', 'custom'])
@@ -85,7 +110,7 @@ export class MergerComponent implements OnInit {
       //console.log('range', range)
     });
 
-    await Office.context.document.getFileAsync(Office.FileType.Compressed, {sliceSize: 65536}, (result) => {
+    /*await Office.context.document.getFileAsync(Office.FileType.Compressed, {sliceSize: 65536}, (result) => {
       let t0 = performance.now();
       //console.log('result', result);
       if (result.status === Office.AsyncResultStatus.Succeeded) {
@@ -109,7 +134,7 @@ export class MergerComponent implements OnInit {
       }
       result.value.closeAsync();
       // result.value will return a valid File Object.
-    });
+    });*/
   }
 
   getTable() {
