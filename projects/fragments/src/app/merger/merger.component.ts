@@ -1,9 +1,6 @@
 import {Component, OnInit} from '@angular/core';
 import {Bound, OfficeEngine} from '../office-engine'
-import context = Office.context;
-import * as XSLS from 'ts-xlsx';
-import * as xmlToJs from 'xml2js'
-import loader from "@angular-devkit/build-angular/src/webpack/plugins/single-test-transform";
+import NumberFormatCategory = Excel.NumberFormatCategory;
 
 @Component({
   selector: 'app-merger',
@@ -44,70 +41,55 @@ export class MergerComponent implements OnInit {
   }
 
   async fillWithSomething() {
+    let t0 = performance.now();
+    console.log('start', t0)
     //OfficeEngine.fillWithSomething([new Bound(0, 0, 50, 3000, 'Sheet3')]).then()
     await Excel.run(async (context) => {
-      let formatsArr: any[] = [];
+
+      //let formatsArr: any[] = [];
       const range = context.workbook.worksheets.getActiveWorksheet().getUsedRange();
-      console.log('conditionalFormats', range.conditionalFormats)
-      let formats = range.conditionalFormats
-      formats.load('items')
-      range.conditionalFormats.clearAll();
+      range.load(["format", 'numberFormatCategories', "formulas"])
       await context.sync()
-      const conditionalFormat = range.conditionalFormats.add(Excel.ConditionalFormatType.custom);
-      //@ts-ignore
-      conditionalFormat.custom.format.set({
-        fill: {
-          color: "orange"
-        },
-        font: {
-          color: "blue",
-          bold: true,
-          underline: "Single",
-        },
-        numberFormat: true,
-        borders: {
-          bottom: {
-            color: "black",
-            style: "Continuous"
-          },
-          top: {
-            color: "black",
-            style: "Continuous"
-          },
-          right: {
-            color: "blue",
-            style: "Continuous"
-          },
-          left: {
-            color: "blue",
-            style: "Continuous"
-          },
+      const format = range.format;
+
+      format.load(['borders', 'horizontalAlignment', 'verticalAlignment', 'fill', 'font', 'textOrientation', 'wrapText', 'indentLevel', 'columnWidth', 'rowHeight', 'autoIndent'])
+      format.fill.color = "#FFC000"
+      format.font.bold = true;
+      format.font.color = "#002060"
+      format.font.name = "Abadi";
+      format.font.size = 15;
+      format.font.underline = "Single";
+      format.horizontalAlignment = "Right";
+      format.indentLevel = 1;
+      format.verticalAlignment = "Bottom";
+      format.borders.load('items');
+      await context.sync();
+      format.borders.items.map(border => {
+        if (border.sideIndex === "InsideHorizontal" || border.sideIndex === "EdgeTop" || border.sideIndex === "EdgeBottom") {
+          border.weight = "Thick";
+          border.style = "Continuous";
+          border.color = "#0070C0"
+        } else if (border.sideIndex === "EdgeLeft" || border.sideIndex === "EdgeRight" || border.sideIndex === "InsideVertical") {
+          border.weight = "Thick";
+          border.style = "Continuous";
+          border.color = "black";
+        } else {
+          border.style = "None"
         }
       })
-      //conditionalFormat.colorScale.criteria = criteria;
-
-      await context.sync();
-      console.log('conditionalFormat', conditionalFormat)
-      /*formats.items.forEach((el: Excel.ConditionalFormat) => {
-        el.load('colorScale')
-        formatsArr.push(el)
+      /*range.numberFormatCategories.map(numberFormatArr => {
+        numberFormatArr.map(numberFormat =>
+          numberFormat = Excel.NumberFormatCategory.currency //"$#,##0.00";
+        )
       })*/
-      /*(Excel.ConditionalFormatType.custom);
+      await context.sync()
+      console.log('time', performance.now() - t0);
+      /*console.log(range.formulas)
+      console.log(range.numberFormatCategories)*/
+      //await context.sync();
 
-      //conditionalFormat.load(['preset', 'custom'])
-      //conditionalFormat.custom.format.font.color = "yellow";
-      conditionalFormat.custom.rule.formula = '=IF(C13>INDIRECT("RC[-1]",0),TRUE)';
-      conditionalFormat.custom.format.font.color = "yellow";
-      await context.sync();
-      console.log('items', range.conditionalFormats.items)
+      //console.log('conditionalFormat', conditionalFormat)
 
-      })*/
-
-
-      /*console.log('formatsArr', formatsArr)
-      console.log('custom', conditionalFormat.custom)*/
-      //console.log('format', conditionalFormat)
-      //console.log('range', range)
     });
 
     /*await Office.context.document.getFileAsync(Office.FileType.Compressed, {sliceSize: 65536}, (result) => {
